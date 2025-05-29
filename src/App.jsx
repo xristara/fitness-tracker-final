@@ -48,7 +48,11 @@ const initialPlan = {
 function kcal(p, f, c) {
   return p * 4 + f * 9 + c * 4;
 }
-
+function calculateBMI(weight, height) {
+  if (!weight || !height) return '';
+  const bmi = weight / (height * height);
+  return bmi.toFixed(1);
+}
 export default function App() {
   const [plan, setPlan] = useState(initialPlan);
   const [weights, setWeights] = useState({});
