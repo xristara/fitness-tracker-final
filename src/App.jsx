@@ -2,15 +2,45 @@ import React, { useState } from 'react';
 
 const initialPlan = {
   Monday: [
-    { meal: 'Πρωινό', food: 'Αυγά (3) + Αβοκάντο (1/2)', protein: 21, fat: 30, carbs: 3 },
+    { meal: 'Πρωινό', food: 'Αυγά (3) + Αβοκάντο', protein: 21, fat: 30, carbs: 3 },
     { meal: 'Μεσημεριανό', food: 'Κοτόπουλο (200g) + Σαλάτα', protein: 40, fat: 18, carbs: 5 },
     { meal: 'Βραδινό', food: 'Σολωμός (150g) + Μπρόκολο', protein: 30, fat: 15, carbs: 4 },
     { activity: 'Γυμναστήριο (βάρη)', burn: 600 }
   ],
   Tuesday: [
-    { meal: 'Πρωινό', food: 'Ομελέτα + τυρί & μανιτάρια', protein: 25, fat: 22, carbs: 4 },
+    { meal: 'Πρωινό', food: 'Ομελέτα με μανιτάρια', protein: 25, fat: 22, carbs: 4 },
     { meal: 'Μεσημεριανό', food: 'Μοσχάρι + Σπανάκι', protein: 45, fat: 20, carbs: 4 },
-    { meal: 'Βραδινό', food: 'Τόνος + αγγουροντομάτα', protein: 28, fat: 12, carbs: 5 },
+    { meal: 'Βραδινό', food: 'Τόνος + ντομάτα', protein: 28, fat: 12, carbs: 5 },
+    { activity: 'Περπάτημα 60λ', burn: 300 }
+  ],
+  Wednesday: [
+    { meal: 'Πρωινό', food: 'Αυγά ποσέ + φέτα', protein: 22, fat: 18, carbs: 3 },
+    { meal: 'Μεσημεριανό', food: 'Γαλοπούλα + κολοκυθάκια', protein: 35, fat: 10, carbs: 4 },
+    { meal: 'Βραδινό', food: 'Ομελέτα (3 αυγά)', protein: 23, fat: 25, carbs: 2 },
+    { activity: 'Γυμναστήριο (βάρη)', burn: 600 }
+  ],
+  Thursday: [
+    { meal: 'Πρωινό', food: 'Γιαούρτι + ξηροί καρποί', protein: 20, fat: 25, carbs: 8 },
+    { meal: 'Μεσημεριανό', food: 'Κοτόπουλο + πράσινη σαλάτα', protein: 40, fat: 18, carbs: 4 },
+    { meal: 'Βραδινό', food: 'Σολομός + κολοκυθάκια', protein: 33, fat: 17, carbs: 3 },
+    { activity: 'Περπάτημα 45λ', burn: 200 }
+  ],
+  Friday: [
+    { meal: 'Πρωινό', food: 'Ομελέτα με μπέικον', protein: 27, fat: 28, carbs: 2 },
+    { meal: 'Μεσημεριανό', food: 'Μοσχάρι + αγκινάρες', protein: 45, fat: 20, carbs: 6 },
+    { meal: 'Βραδινό', food: 'Τυρί + αγγουράκι', protein: 18, fat: 10, carbs: 2 },
+    { activity: 'Γυμναστήριο (βάρη)', burn: 600 }
+  ],
+  Saturday: [
+    { meal: 'Πρωινό', food: 'Scrambled eggs + φέτα', protein: 24, fat: 30, carbs: 2 },
+    { meal: 'Μεσημεριανό', food: 'Ψάρι + λάχανο', protein: 38, fat: 15, carbs: 4 },
+    { meal: 'Βραδινό', food: 'Γαλοπούλα + κολοκυθάκια', protein: 32, fat: 16, carbs: 3 },
+    { activity: 'Περπάτημα 30λ', burn: 150 }
+  ],
+  Sunday: [
+    { meal: 'Πρωινό', food: 'Γιαούρτι 10% + αμύγδαλα', protein: 22, fat: 25, carbs: 5 },
+    { meal: 'Μεσημεριανό', food: 'Μοσχάρι + σαλάτα ρόκα', protein: 40, fat: 18, carbs: 5 },
+    { meal: 'Βραδινό', food: 'Αυγά + τυρί & ελιές', protein: 20, fat: 22, carbs: 2 },
     { activity: 'Περπάτημα 60λ', burn: 300 }
   ]
 };
@@ -37,7 +67,7 @@ export default function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ textAlign: 'center' }}>📅 Διατροφή & Παρακολούθηση Βάρους</h1>
+      <h1 style={{ textAlign: 'center' }}>📅 Εβδομαδιαίο Πλάνο Διατροφής & Βάρους</h1>
       {Object.entries(plan).map(([day, items]) => {
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
         items.forEach(entry => {
@@ -59,7 +89,7 @@ export default function App() {
               <thead>
                 <tr style={{ background: '#eee' }}>
                   <th>Γεύμα</th>
-                  <th>Τι</th>
+                  <th>Περιγραφή</th>
                   <th>Πρ.</th>
                   <th>Λίπ.</th>
                   <th>Υδ.</th>
@@ -104,7 +134,11 @@ export default function App() {
             </table>
             <div style={{ marginTop: '10px' }}>
               <label>Βάρος σώματος (kg): </label>
-              <input type="number" value={weights[day] || ''} onChange={e => handleWeightChange(day, e.target.value)} />
+              <input
+                type="number"
+                value={weights[day] || ''}
+                onChange={e => handleWeightChange(day, e.target.value)}
+              />
             </div>
           </div>
         );
