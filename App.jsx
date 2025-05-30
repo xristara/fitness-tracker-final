@@ -292,59 +292,82 @@ function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, go
 
 
 export default function App() {
-  const [plan, setPlan] = useState(initialPlan);
-  const [weights, setWeights] = useState({});
-  const [height, setHeight] = useState(1.7); // Ύψος σε μέτρα
-  const [age, setAge] = useState(30); // Νέο state για την ηλικία
-  const [gender, setGender] = useState('male'); // Νέο state για το φύλο
-  const [activityLevel, setActivityLevel] = useState('moderate'); // Νέο state για το επίπεδο δραστηριότητας
-  const [goal, setGoal] = useState('maintain'); // Νέο state για τον στόχο
-  const [history, setHistory] = useState(generateYearHistory());
+  // Functions to get initial state from localStorage or use defaults
+  const getInitialState = (key, defaultValue) => {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error(`Error parsing localStorage key "${key}":`, e);
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  };
+
+  const [plan, setPlan] = useState(() => getInitialState('mealPlan', initialPlan));
+  const [weights, setWeights] = useState(() => getInitialState('weeklyWeights', {}));
+  const [height, setHeight] = useState(() => getInitialState('userHeight', 1.7));
+  const [age, setAge] = useState(() => getInitialState('userAge', 30));
+  const [gender, setGender] = useState(() => getInitialState('userGender', 'male'));
+  const [activityLevel, setActivityLevel] = useState(() => getInitialState('userActivityLevel', 'moderate'));
+  const [goal, setGoal] = useState(() => getInitialState('userGoal', 'maintain'));
+  const [history, setHistory] = useState(() => {
+    // Merge generated history with stored history to handle new years/months
+    const generated = generateYearHistory();
+    const storedHistory = getInitialState('weightHistory', {});
+    return { ...generated, ...storedHistory };
+  });
 
   // State για τις υπολογιζόμενες ημερήσιες θερμίδες
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
 
 
   const handleMealIngredientChange = (day, mealIdx, ingredientIdx, field, value) => {
-    const updatedPlan = { ...plan };
-    const entry = updatedPlan[day][mealIdx];
+    setPlan(prevPlan => {
+      const updatedPlan = { ...prevPlan };
+      const entry = updatedPlan[day][mealIdx];
 
-    if (entry.type === 'meal') {
-      const updatedIngredients = [...entry.ingredients];
-      updatedIngredients[ingredientIdx] = {
-        ...updatedIngredients[ingredientIdx],
-        [field]: parseFloat(value) || 0 // Ποσότητα μπορεί να είναι δεκαδική
-      };
-      entry.ingredients = updatedIngredients;
-    } else if (entry.type === 'activity') {
-        entry[field] = parseInt(value) || 0;
-    }
-    setPlan(updatedPlan);
+      if (entry.type === 'meal') {
+        const updatedIngredients = [...entry.ingredients];
+        updatedIngredients[ingredientIdx] = {
+          ...updatedIngredients[ingredientIdx],
+          [field]: parseFloat(value) || 0 // Ποσότητα μπορεί να είναι δεκαδική
+        };
+        entry.ingredients = updatedIngredients;
+      } else if (entry.type === 'activity') {
+          entry[field] = parseInt(value) || 0;
+      }
+      return updatedPlan;
+    });
   };
 
   const handleWeightChange = (day, value) => {
-    setWeights({ ...weights, [day]: value });
+    setWeights(prevWeights => ({ ...prevWeights, [day]: value }));
   };
 
   const handleHistoryChange = (year, month, value, type) => {
-    const updated = { ...history };
-    const parsedValue = parseFloat(value);
+    setHistory(prevHistory => {
+      const updated = { ...prevHistory };
+      const parsedValue = parseFloat(value);
 
-    // Ensure the year and month objects exist
-    if (!updated[year]) updated[year] = {};
-    if (!updated[year][month]) updated[year][month] = { weight: '', bmi: '' };
+      // Ensure the year and month objects exist
+      if (!updated[year]) updated[year] = {};
+      if (!updated[year][month]) updated[year][month] = { weight: '', bmi: '' };
 
-    if (type === 'weight') {
-      updated[year][month].weight = isNaN(parsedValue) ? '' : parsedValue;
-      // Recalculate BMI if weight changes
-      updated[year][month].bmi = calculateBMI(parsedValue, height);
-    } else if (type === 'bmi') {
-      updated[year][month].bmi = isNaN(parsedValue) ? '' : parsedValue;
-      // We usually calculate BMI from weight, not the other way around.
-      // If you want to input BMI directly, you'd need a way to deduce weight or accept BMI as a primary input.
-      // For now, BMI is derived from weight.
-    }
-    setHistory(updated);
+      if (type === 'weight') {
+        updated[year][month].weight = isNaN(parsedValue) ? '' : parsedValue;
+        // Recalculate BMI if weight changes
+        updated[year][month].bmi = calculateBMI(parsedValue, height);
+      } else if (type === 'bmi') {
+        // We usually calculate BMI from weight, not the other way around.
+        // If you want to input BMI directly, you'd need a way to deduce weight or accept BMI as a primary input.
+        // For now, BMI is derived from weight.
+        updated[year][month].bmi = isNaN(parsedValue) ? '' : parsedValue;
+      }
+      return updated;
+    });
   };
 
   // Αυτόματη αποθήκευση τρέχοντος εβδομαδιαίου βάρους στο τρέχον μήνα/έτος
@@ -376,6 +399,39 @@ export default function App() {
     }
   }, [weights, height]);
 
+  // useEffects for saving to localStorage
+  useEffect(() => {
+    localStorage.setItem('mealPlan', JSON.stringify(plan));
+  }, [plan]);
+
+  useEffect(() => {
+    localStorage.setItem('weeklyWeights', JSON.stringify(weights));
+  }, [weights]);
+
+  useEffect(() => {
+    localStorage.setItem('userHeight', JSON.stringify(height));
+  }, [height]);
+
+  useEffect(() => {
+    localStorage.setItem('userAge', JSON.stringify(age));
+  }, [age]);
+
+  useEffect(() => {
+    localStorage.setItem('userGender', JSON.stringify(gender));
+  }, [gender]);
+
+  useEffect(() => {
+    localStorage.setItem('userActivityLevel', JSON.stringify(activityLevel));
+  }, [activityLevel]);
+
+  useEffect(() => {
+    localStorage.setItem('userGoal', JSON.stringify(goal));
+  }, [goal]);
+
+  useEffect(() => {
+    localStorage.setItem('weightHistory', JSON.stringify(history));
+  }, [history]);
+
   // useEffect για τον υπολογισμό των ημερήσιων θερμίδων όταν αλλάζουν τα σχετικά δεδομένα
   useEffect(() => {
     // Εύρεση του πρώτου καταχωρημένου βάρους ή default τιμή
@@ -383,7 +439,16 @@ export default function App() {
     const firstDayWithWeight = Object.keys(weights).find(day => weights[day]);
     if (firstDayWithWeight) {
       currentWeight = parseFloat(weights[firstDayWithWeight]);
+    } else if (Object.keys(history).length > 0) { // If no current weights, try history
+      const lastYear = Object.keys(history).sort().pop();
+      if (lastYear) {
+        const lastMonth = Object.keys(history[lastYear]).sort((a,b) => months.indexOf(a) - months.indexOf(b)).pop();
+        if (lastMonth && history[lastYear][lastMonth].weight) {
+          currentWeight = parseFloat(history[lastYear][lastMonth].weight);
+        }
+      }
     }
+
 
     const calculatedCalories = calculateDailyCalories(
       currentWeight,
@@ -394,7 +459,7 @@ export default function App() {
       goal
     );
     setDailyCalorieTarget(calculatedCalories);
-  }, [weights, height, age, gender, activityLevel, goal]);
+  }, [weights, height, age, gender, activityLevel, goal, history]); // Added history to dependency array
 
 
   return (
@@ -429,215 +494,4 @@ export default function App() {
             <option value="sedentary">Καθιστική (Ελάχιστη άσκηση)</option>
             <option value="light">Ελαφριά (1-3 φορές/εβδ.)</option>
             <option value="moderate">Μέτρια (3-5 φορές/εβδ.)</option>
-            <option value="active">Ενεργή (6-7 φορές/εβδ.)</option>
-            <option value="veryActive">Πολύ Ενεργή (Σκληρή άσκηση/Φυσική εργασία)</option>
-          </select>
-          <label>🎯 Στόχος: </label>
-          <select value={goal} onChange={(e) => setGoal(e.target.value)}>
-            <option value="maintain">Διατήρηση</option>
-            <option value="bulk">Όγκος</option>
-            <option value="cut">Γράμμωση</option>
-          </select>
-        </div>
-        {dailyCalorieTarget && (
-          <h3 style={{ marginTop: '15px' }}>
-            Συνιστώμενες Ημερήσιες Θερμίδες: <span style={{ color: '#007bff' }}>{dailyCalorieTarget} kcal</span>
-          </h3>
-        )}
-      </div>
-
-      {Object.entries(plan).map(([day, entriesForDay]) => { // Έχω αλλάξει το 'items' σε 'entriesForDay' για να είναι πιο σαφές
-        let totalP = 0, totalF = 0, totalC = 0, burn = 0;
-
-        entriesForDay.forEach(entry => {
-          if (entry.type === 'meal') {
-            const mealMacros = calculateMealMacros(entry.ingredients);
-            totalP += mealMacros.protein;
-            totalF += mealMacros.fat;
-            totalC += mealMacros.carbs;
-          } else if (entry.type === 'activity') {
-            burn += entry.burn;
-          }
-        });
-
-        const totalKcal = kcal(totalP, totalF, totalC);
-        const netKcal = totalKcal - burn;
-        const weight = weights[day];
-        const bmi = calculateBMI(weight, height);
-
-        return (
-          <div key={day} style={{ marginBottom: '40px' }}>
-            <h2>{day}</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#eee' }}>
-                  <th>Γεύμα</th>
-                  <th>Τροφή / Συστατικό</th>
-                  <th>Ποσότητα</th>
-                  <th>Πρωτεΐνη (g)</th>
-                  <th>Λίπος (g)</th>
-                  <th>Υδατ. (g)</th>
-                  <th>Θερμίδες (kcal)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entriesForDay.map((entry, mealIdx) => (
-                  entry.type === 'meal' ? (
-                    <>
-                      <tr key={`${day}-${mealIdx}-title`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
-                        <td rowSpan={entry.ingredients.length + 1}>{entry.meal}</td> {/* Meal name */}
-                        <td colSpan="6"></td> {/* Empty cells for spacing */}
-                      </tr>
-                      {entry.ingredients.map((ingredient, ingredientIdx) => {
-                        const foodInfo = foodDatabase[ingredient.foodId];
-                        // Αν δεν βρεθεί η τροφή, δείχνουμε 0 και προειδοποίηση
-                        if (!foodInfo) {
-                          console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
-                          return (
-                            <tr key={`${day}-${mealIdx}-${ingredientIdx}`} style={{ color: 'red' }}>
-                              <td>Άγνωστη Τροφή: {ingredient.foodId}</td>
-                              <td>{ingredient.quantity}</td>
-                              <td colSpan="4">Δεδομένα δεν βρέθηκαν</td>
-                              <td>0</td>
-                            </tr>
-                          );
-                        }
-
-                        const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
-                          ? ingredient.quantity
-                          : ingredient.quantity / 100;
-
-                        const p = parseFloat((foodInfo.protein * multiplier).toFixed(1));
-                        const f = parseFloat((foodInfo.fat * multiplier).toFixed(1));
-                        const c = parseFloat((foodInfo.carbs * multiplier).toFixed(1));
-                        const itemKcal = kcal(p, f, c);
-
-                        return (
-                          <tr key={`${day}-${mealIdx}-${ingredientIdx}`}>
-                            <td>
-                              {foodInfo.name} {/* Εμφανίζει το "όνομα" της τροφής */}
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                step="0.1" // Επιδέχεται δεκαδικές ποσότητες
-                                value={ingredient.quantity || ''}
-                                onChange={e => handleMealIngredientChange(day, mealIdx, ingredientIdx, 'quantity', e.target.value)}
-                                style={{ width: '80px' }}
-                              /> {foodInfo.unit}
-                            </td>
-                            <td>{p}</td>
-                            <td>{f}</td>
-                            <td>{c}</td>
-                            <td>{itemKcal}</td>
-                          </tr>
-                        );
-                      })}
-                      {/* Σύνολα για το κάθε γεύμα */}
-                      <tr style={{ background: '#f0f0f0', fontWeight: 'bold' }}>
-                        <td colSpan="3">Σύνολο Γεύματος</td>
-                        <td>{calculateMealMacros(entry.ingredients).protein}</td>
-                        <td>{calculateMealMacros(entry.ingredients).fat}</td>
-                        <td>{calculateMealMacros(entry.ingredients).carbs}</td>
-                        <td>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
-                      </tr>
-                    </>
-                  ) : (
-                    // Για δραστηριότητες
-                    <tr key={`${day}-${mealIdx}`}>
-                      <td colSpan="5">{entry.activity}</td>
-                      <td>
-                        <input
-                          type="number"
-                          value={entry.burn || ''}
-                          onChange={e => handleMealIngredientChange(day, mealIdx, null, 'burn', e.target.value)} // null για ingredientIdx
-                          style={{ width: '80px' }}
-                        />
-                      </td>
-                    </tr>
-                  )
-                ))}
-                {/* Συνολικά για την ημέρα */}
-                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
-                  <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
-                  <td>{totalKcal}</td>
-                </tr>
-                {burn > 0 && (
-                  <>
-                    <tr style={{ color: 'green' }}>
-                      <td colSpan="5">Κατανάλωση θερμίδων</td>
-                      <td>-{burn}</td>
-                    </tr>
-                    <tr style={{ background: '#e0ffe0', fontWeight: 'bold' }}>
-                      <td colSpan="5">Καθαρό θερμιδικό ισοζύγιο</td>
-                      <td>{netKcal}</td>
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
-            <div style={{ marginTop: '10px' }}>
-              <label>Βάρος σώματος (kg): </label>
-              <input
-                type="number"
-                value={weight || ''}
-                onChange={e => handleWeightChange(day, e.target.value)}
-              />
-              {bmi && (
-                <span style={{ marginLeft: '10px' }}>BMI: <strong>{bmi}</strong></span>
-              )}
-            </div>
-          </div>
-        );
-      })}
-
-      <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI</h2>
-      <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Added overflow for horizontal scrolling */}
-        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}> {/* minWidth to ensure horizontal layout */}
-          <thead>
-            <tr>
-              <th rowSpan="2" style={{ background: '#ddd', padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>Έτος</th>
-              {months.map(month => (
-                <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
-              ))}
-            </tr>
-            <tr>
-              {months.map(month => (
-                <React.Fragment key={`${month}-sub`}>
-                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
-                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
-                </React.Fragment>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(history).sort().map(year => (
-              <tr key={year}>
-                <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
-                {months.map(month => {
-                  const values = history[year][month];
-                  return (
-                    <React.Fragment key={`${year}-${month}-data`}>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={values.weight || ''}
-                          onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
-                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: '#555' }}>
-                        {values.bmi || ''}
-                      </td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+            <option value="active">
