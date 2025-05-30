@@ -56,7 +56,7 @@ const foodDatabase = {
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'PurewheyisolatAM ': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, // ανά 1 τεμάχιο μπάρας (τυπική)
+  'PurewheyisolatAM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
 };
 
 
@@ -113,7 +113,7 @@ const initialPlan = {
     ]},
     { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'greekYogurt2pct', quantity: 100 }] }, // Αντικατάσταση "Σμούθι φρούτων"
     { meal: 'Βραδινό', type: 'meal', ingredients: [
-        { foodId: 'Cuisse De Poulet', quantity: 150 },
+        { foodId: 'Μπουτι κότας', quantity: 150 },
         { foodId: 'zucchini', quantity: 100 }
     ]},
     { type: 'activity', activity: 'Τρέξιμο 30λ', burn: 400 }
@@ -123,7 +123,7 @@ const initialPlan = {
         { foodId: 'breadWholeWheat', quantity: 60 }, // π.χ. 2 φέτες ψωμί
         { foodId: 'egg', quantity: 2 }
     ]},
-    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'PurewheyisolatAM', quantity: 30 }] }, 
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'WHEY', quantity: 30 }] }, 
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
         { foodId: 'mincedMeatLean', quantity: 150 },
         { foodId: 'riceCooked', quantity: 200 }
