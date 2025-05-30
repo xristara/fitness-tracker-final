@@ -4,11 +4,7 @@ import {
 } from 'recharts';
 
 const initialPlan = {
-  Monday: [
-    { meal: 'Πρωινό', food: 'Αυγά (3)', protein: 21, fat: 15, carbs: 1 },
-    { activity: 'Γυμναστήριο', burn: 400 }
-  ]
-};
+  
 
 function kcal(p, f, c) {
   return p * 4 + f * 9 + c * 4;
