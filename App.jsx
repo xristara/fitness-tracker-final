@@ -494,4 +494,215 @@ export default function App() {
             <option value="sedentary">Καθιστική (Ελάχιστη άσκηση)</option>
             <option value="light">Ελαφριά (1-3 φορές/εβδ.)</option>
             <option value="moderate">Μέτρια (3-5 φορές/εβδ.)</option>
-            <option value="active">
+            <option value="active">Ενεργή (6-7 φορές/εβδ.)</option>
+            <option value="veryActive">Πολύ Ενεργή (Σκληρή άσκηση/Φυσική εργασία)</option>
+          </select>
+          <label>🎯 Στόχος: </label>
+          <select value={goal} onChange={(e) => setGoal(e.target.value)}>
+            <option value="maintain">Διατήρηση</option>
+            <option value="bulk">Όγκος</option>
+            <option value="cut">Γράμμωση</option>
+          </select>
+        </div>
+        {dailyCalorieTarget && (
+          <h3 style={{ marginTop: '15px' }}>
+            Συνιστώμενες Ημερήσιες Θερμίδες: <span style={{ color: '#007bff' }}>{dailyCalorieTarget} kcal</span>
+          </h3>
+        )}
+      </div>
+
+      {Object.entries(plan).map(([day, entriesForDay]) => {
+        let totalP = 0, totalF = 0, totalC = 0, burn = 0;
+
+        entriesForDay.forEach(entry => {
+          if (entry.type === 'meal') {
+            const mealMacros = calculateMealMacros(entry.ingredients);
+            totalP += mealMacros.protein;
+            totalF += mealMacros.fat;
+            totalC += mealMacros.carbs;
+          } else if (entry.type === 'activity') {
+            burn += entry.burn;
+          }
+        });
+
+        const totalKcal = kcal(totalP, totalF, totalC);
+        const netKcal = totalKcal - burn;
+        const weight = weights[day];
+        const bmi = calculateBMI(weight, height);
+
+        return (
+          <div key={day} style={{ marginBottom: '40px' }}>
+            <h2>{day}</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#eee' }}>
+                  <th>Γεύμα</th>
+                  <th>Τροφή / Συστατικό</th>
+                  <th>Ποσότητα</th>
+                  <th>Πρωτεΐνη (g)</th>
+                  <th>Λίπος (g)</th>
+                  <th>Υδατ. (g)</th>
+                  <th>Θερμίδες (kcal)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entriesForDay.map((entry, mealIdx) => (
+                  entry.type === 'meal' ? (
+                    <>
+                      <tr key={`${day}-${mealIdx}-title`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
+                        <td rowSpan={entry.ingredients.length + 1}>{entry.meal}</td> {/* Meal name */}
+                        <td colSpan="6"></td> {/* Empty cells for spacing */}
+                      </tr>
+                      {entry.ingredients.map((ingredient, ingredientIdx) => {
+                        const foodInfo = foodDatabase[ingredient.foodId];
+                        // Αν δεν βρεθεί η τροφή, δείχνουμε 0 και προειδοποίηση
+                        if (!foodInfo) {
+                          console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
+                          return (
+                            <tr key={`${day}-${mealIdx}-${ingredientIdx}`} style={{ color: 'red' }}>
+                              <td>Άγνωστη Τροφή: {ingredient.foodId}</td>
+                              <td>{ingredient.quantity}</td>
+                              <td colSpan="4">Δεδομένα δεν βρέθηκαν</td>
+                              <td>0</td>
+                            </tr>
+                          );
+                        }
+
+                        const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
+                          ? ingredient.quantity
+                          : ingredient.quantity / 100;
+
+                        const p = parseFloat((foodInfo.protein * multiplier).toFixed(1));
+                        const f = parseFloat((foodInfo.fat * multiplier).toFixed(1));
+                        const c = parseFloat((foodInfo.carbs * multiplier).toFixed(1));
+                        const itemKcal = kcal(p, f, c);
+
+                        return (
+                          <tr key={`${day}-${mealIdx}-${ingredientIdx}`}>
+                            <td>
+                              {foodInfo.name} {/* Εμφανίζει το "όνομα" της τροφής */}
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                step="0.1" // Επιδέχεται δεκαδικές ποσότητες
+                                value={ingredient.quantity || ''}
+                                onChange={e => handleMealIngredientChange(day, mealIdx, ingredientIdx, 'quantity', e.target.value)}
+                                style={{ width: '80px' }}
+                              /> {foodInfo.unit}
+                            </td>
+                            <td>{p}</td>
+                            <td>{f}</td>
+                            <td>{c}</td>
+                            <td>{itemKcal}</td>
+                          </tr>
+                        );
+                      })}
+                      {/* Σύνολα για το κάθε γεύμα */}
+                      <tr style={{ background: '#f0f0f0', fontWeight: 'bold' }}>
+                        <td colSpan="3">Σύνολο Γεύματος</td>
+                        <td>{calculateMealMacros(entry.ingredients).protein}</td>
+                        <td>{calculateMealMacros(entry.ingredients).fat}</td>
+                        <td>{calculateMealMacros(entry.ingredients).carbs}</td>
+                        <td>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
+                      </tr>
+                    </>
+                  ) : (
+                    // Για δραστηριότητες
+                    <tr key={`${day}-${mealIdx}`}>
+                      <td colSpan="5">{entry.activity}</td>
+                      <td>
+                        <input
+                          type="number"
+                          value={entry.burn || ''}
+                          onChange={e => handleMealIngredientChange(day, mealIdx, null, 'burn', e.target.value)} // null για ingredientIdx
+                          style={{ width: '80px' }}
+                        />
+                      </td>
+                    </tr>
+                  )
+                ))}
+                {/* Συνολικά για την ημέρα */}
+                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                  <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
+                  <td>{totalKcal}</td>
+                </tr>
+                {burn > 0 && (
+                  <>
+                    <tr style={{ color: 'green' }}>
+                      <td colSpan="5">Κατανάλωση θερμίδων</td>
+                      <td>-{burn}</td>
+                    </tr>
+                    <tr style={{ background: '#e0ffe0', fontWeight: 'bold' }}>
+                      <td colSpan="5">Καθαρό θερμιδικό ισοζύγιο</td>
+                      <td>{netKcal}</td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+            <div style={{ marginTop: '10px' }}>
+              <label>Βάρος σώματος (kg): </label>
+              <input
+                type="number"
+                value={weights[day] || ''} // Χρησιμοποιεί το state weights[day]
+                onChange={e => handleWeightChange(day, e.target.value)}
+              />
+              {bmi && (
+                <span style={{ marginLeft: '10px' }}>BMI: <strong>{bmi}</strong></span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI</h2>
+      <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Added overflow for horizontal scrolling */}
+        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}> {/* minWidth to ensure horizontal layout */}
+          <thead>
+            <tr>
+              <th rowSpan="2" style={{ background: '#ddd', padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>Έτος</th>
+              {months.map(month => (
+                <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
+              ))}
+            </tr>
+            <tr>
+              {months.map(month => (
+                <React.Fragment key={`${month}-sub`}>
+                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
+                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
+                </React.Fragment>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(history).sort().map(year => (
+              <tr key={year}>
+                <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
+                {months.map(month => {
+                  const values = history[year]?.[month] || { weight: '', bmi: '' }; // Handle potential undefined month
+                  return (
+                    <React.Fragment key={`${year}-${month}-data`}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={values.weight || ''}
+                          onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
+                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: '#555' }}>
+                        {values.bmi || ''}
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
