@@ -10,21 +10,21 @@ const months = [
 const foodDatabase = {
   // Δημητριακά, Ψωμί, Ζυμαρικά, Ρύζι
   'oats': { name: 'Βρώμη', protein: 13, fat: 5, carbs: 66, unit: 'g' },
-  'riceCakes': { name: 'Ρυζογκοφρέτες', protein: 7, fat: 3, carbs: 80, unit: 'g' },
+  'Weetabix Original': { name: 'δημητριακά ολικής άλεσης', protein: 12, fat: 2, carbs: 69, unit: 'g' },
   'breadWholeWheat': { name: 'Ψωμί Ολικής', protein: 13, fat: 3, carbs: 45, unit: 'g' },
   'riceCooked': { name: 'Ρύζι Μαγειρεμένο', protein: 2.7, fat: 0.3, carbs: 28, unit: 'g' }, // μαγειρεμένο ρύζι
   'mashedPotatoes': { name: 'Πουρές Πατάτας', protein: 2, fat: 5, carbs: 15, unit: 'g' }, // σπιτικός, με λίγο βούτυρο/γάλα
 
   // Πρωτεΐνες (Κρέας, Ψάρι, Αυγά, Όσπρια)
-  'egg': { name: 'Αυγό', protein: 13, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
+  'egg': { name: 'Αυγό', protein: 6, fat: 5.3, carbs: 0.6, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
   'chickenBreast': { name: 'Στήθος Κοτόπουλου', protein: 31, fat: 3.6, carbs: 0, unit: 'g' },
   'salmon': { name: 'Σολομός', protein: 20, fat: 13, carbs: 0, unit: 'g' },
   'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
   'tunaInWater': { name: 'Τόνος σε Νερό', protein: 25, fat: 0.5, carbs: 0, unit: 'g' },
   'fishWhite': { name: 'Λευκό Ψάρι', protein: 18, fat: 1, carbs: 0, unit: 'g' },
-  'turkeyBreast': { name: 'Στήθος Γαλοπούλας', protein: 29, fat: 1, carbs: 0, unit: 'g' },
+  'Cuisse De Poulet SP': { name: 'Μπουτι κότας', protein: 26, fat: 6, carbs: 0, unit: 'g' },
   'mincedMeatLean': { name: 'Κιμάς Άπαχος', protein: 20, fat: 15, carbs: 0, unit: 'g' }, // βοδινός άπαχος
-  'fetaCheese': { name: 'Φέτα', protein: 14, fat: 21, carbs: 4.1, unit: 'g' },
+  'fetaCheese': { name: 'Φέτα', protein: 14, fat: 21, carbs: 4, unit: 'g' },
 
   // Γαλακτοκομικά
   'greekYogurt2pct': { name: 'Γιαούρτι Στραγγιστό 2%', protein: 10, fat: 2, carbs: 4, unit: 'g' },
@@ -48,15 +48,15 @@ const foodDatabase = {
   'seasonalFruits': { name: 'Φρούτα Εποχής', protein: 0.5, fat: 0.2, carbs: 15, unit: 'g' }, // Γενική τιμή
 
   // Ξηροί καρποί, Σπόροι, Βούτυρα
-  'walnuts': { name: 'Καρύδια', protein: 15, fat: 65, carbs: 14, unit: 'g' },
+  'walnuts': { name: 'Καρύδια', protein: 15, fat: 65, carbs: 11, unit: 'g' },
   'almonds': { name: 'Αμύγδαλα', protein: 21, fat: 49, carbs: 22, unit: 'g' },
-  'peanutButter': { name: 'Φυστικοβούτυρο', protein: 25, fat: 50, carbs: 20, unit: 'g' },
+  'peanutButter': { name: 'Φυστικοβούτυρο', protein: 28, fat: 48, carbs: 13, unit: 'g' },
   'hummus': { name: 'Χούμους', protein: 7.9, fat: 9.6, carbs: 14.3, unit: 'g' },
   'mixedNuts': { name: 'Ανάμεικτοι Ξηροί Καρποί', protein: 15, fat: 50, carbs: 20, unit: 'g' },
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'proteinBar': { name: 'Μπάρα Πρωτεΐνης', protein: 20, fat: 10, carbs: 30, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο μπάρας (τυπική)
+  'PurewheyisolatAM ': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, // ανά 1 τεμάχιο μπάρας (τυπική)
 };
 
 
