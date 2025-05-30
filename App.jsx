@@ -104,7 +104,7 @@ const initialPlan = {
         { foodId: 'milkSemiSkimmed', quantity: 200 }
     ]},
     { meal: 'Σνακ 1', type: 'meal', ingredients: [
-        { foodId: 'riceCakes', quantity: 20 }, // 2 ρυζογκοφρέτες περίπου 20γρ
+        { foodId: 'Weetabix Original', quantity: 20 }, 
         { foodId: 'peanutButter', quantity: 20 }
     ]},
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
@@ -113,7 +113,7 @@ const initialPlan = {
     ]},
     { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'greekYogurt2pct', quantity: 100 }] }, // Αντικατάσταση "Σμούθι φρούτων"
     { meal: 'Βραδινό', type: 'meal', ingredients: [
-        { foodId: 'turkeyBreast', quantity: 150 },
+        { foodId: 'Cuisse De Poulet', quantity: 150 },
         { foodId: 'zucchini', quantity: 100 }
     ]},
     { type: 'activity', activity: 'Τρέξιμο 30λ', burn: 400 }
@@ -123,7 +123,7 @@ const initialPlan = {
         { foodId: 'breadWholeWheat', quantity: 60 }, // π.χ. 2 φέτες ψωμί
         { foodId: 'egg', quantity: 2 }
     ]},
-    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'proteinBar', quantity: 60 }] }, // π.χ. 60γρ μπάρα
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'PurewheyisolatAM', quantity: 30 }] }, 
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
         { foodId: 'mincedMeatLean', quantity: 150 },
         { foodId: 'riceCooked', quantity: 200 }
