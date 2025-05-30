@@ -1,7 +1,13 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
 } from 'recharts';
+
+const months = [
+  'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
+  'Μάιος', 'Ιούνιος', 'Ιούλιος', 'Αύγουστος',
+  'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+];
 
 const initialPlan = {
   Monday: [
@@ -71,10 +77,22 @@ function calculateBMI(weight, height) {
   return +(weight / (height * height)).toFixed(1);
 }
 
+function generateYearHistory(start = 2025, end = 2050) {
+  const result = {};
+  for (let year = start; year <= end; year++) {
+    result[year] = {};
+    months.forEach(month => {
+      result[year][month] = { weight: '', bmi: '' };
+    });
+  }
+  return result;
+}
+
 export default function App() {
   const [plan, setPlan] = useState(initialPlan);
   const [weights, setWeights] = useState({});
   const [height, setHeight] = useState(1.7);
+  const [history, setHistory] = useState(generateYearHistory());
 
   const handleChange = (day, idx, field, value) => {
     const updated = { ...plan };
@@ -88,11 +106,48 @@ export default function App() {
     setWeights({ ...weights, [day]: value });
   };
 
+  const handleHistoryChange = (year, month, value) => {
+    const updated = { ...history };
+    const weight = parseFloat(value);
+    updated[year][month].weight = weight;
+    updated[year][month].bmi = calculateBMI(weight, height);
+    setHistory(updated);
+  };
+
   const weightSummary = Object.entries(weights).map(([day, weight]) => ({
     day,
     weight: parseFloat(weight),
     bmi: calculateBMI(parseFloat(weight), height)
   }));
+
+  // Αυτόματη αποθήκευση τρέχοντος εβδομαδιαίου βάρους στο τρέχον μήνα/έτος
+  useEffect(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = months[now.getMonth()];
+    let sum = 0;
+    let count = 0;
+    Object.values(weights).forEach(val => {
+      const w = parseFloat(val);
+      if (!isNaN(w)) {
+        sum += w;
+        count++;
+      }
+    });
+    const avgWeight = count > 0 ? +(sum / count).toFixed(1) : '';
+    if (avgWeight) {
+      setHistory(prev => ({
+        ...prev,
+        [year]: {
+          ...prev[year],
+          [month]: {
+            weight: avgWeight,
+            bmi: calculateBMI(avgWeight, height)
+          }
+        }
+      }));
+    }
+  }, [weights, height]);
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
@@ -200,6 +255,39 @@ export default function App() {
           </div>
         );
       })}
+
+      <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI (2025 - 2050)</h2>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#ddd' }}>
+            <th>Έτος</th>
+            <th>Μήνας</th>
+            <th>Βάρος (kg)</th>
+            <th>BMI</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(history).map(([year, monthsObj]) => (
+            Object.entries(monthsObj).map(([month, values], idx) => (
+              <tr key={`${year}-${month}`}>
+                {idx === 0 && (
+                  <td rowSpan={12} style={{ verticalAlign: 'top', fontWeight: 'bold' }}>{year}</td>
+                )}
+                <td>{month}</td>
+                <td>
+                  <input
+                    type="number"
+                    value={values.weight || ''}
+                    onChange={e => handleHistoryChange(year, month, e.target.value)}
+                    style={{ width: '80px' }}
+                  />
+                </td>
+                <td>{values.bmi || ''}</td>
+              </tr>
+            ))
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
