@@ -17,7 +17,7 @@ const foodDatabase = {
   'mashedPotatoes': { name: 'Πουρές Πατάτας', protein: 2, fat: 5, carbs: 15, unit: 'g' }, // σπιτικός, με λίγο βούτυρο/γάλα
 
   // Πρωτεΐνες (Κρέας, Ψάρι, Αυγά, Όσπρια)
-  'egg': { name: 'Αυγό', protein: 13, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
+  'egg': { name: 'Αυγό', protein: 6, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
   'chickenBreast': { name: 'Στήθος Κοτόπουλου', protein: 31, fat: 3.6, carbs: 0, unit: 'g' },
   'salmon': { name: 'Σολομός', protein: 20, fat: 13, carbs: 0, unit: 'g' },
   'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
@@ -57,7 +57,7 @@ const foodDatabase = {
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'proteinBar': { name: 'Μπάρα Πρωτεΐνης', protein: 20, fat: 10, carbs: 30, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο μπάρας (τυπική)
+  'Pure whey isolat AM ': { name: 'whey', protein: 27, fat: 0,5, carbs: 1,2, unit: 'g' }, // ανά 1 τεμάχιο μπάρας (τυπική)
   // Έχουν αφαιρεθεί αόριστες τροφές όπως "Σμούθι φρούτων", "Γλυκό με stevia"
 };
 
