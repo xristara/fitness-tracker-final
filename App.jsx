@@ -1,4 +1,4 @@
-﻿﻿import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
 } from 'recharts';
@@ -66,9 +66,15 @@ function kcal(p, f, c) {
   return p * 4 + f * 9 + c * 4;
 }
 
+function calculateBMI(weight, height) {
+  if (!weight || !height) return null;
+  return +(weight / (height * height)).toFixed(1);
+}
+
 export default function App() {
   const [plan, setPlan] = useState(initialPlan);
   const [weights, setWeights] = useState({});
+  const [height, setHeight] = useState(1.7);
 
   const handleChange = (day, idx, field, value) => {
     const updated = { ...plan };
@@ -82,9 +88,38 @@ export default function App() {
     setWeights({ ...weights, [day]: value });
   };
 
+  const weightSummary = Object.entries(weights).map(([day, weight]) => ({
+    day,
+    weight: parseFloat(weight),
+    bmi: calculateBMI(parseFloat(weight), height)
+  }));
+
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1 style={{ textAlign: 'center' }}>📊 Εβδομαδιαίο Πλάνο Διατροφής & Βάρους</h1>
+
+      <h2>📏 Ύψος (σε μέτρα):</h2>
+      <input
+        type="number"
+        step="0.01"
+        value={height}
+        onChange={(e) => setHeight(parseFloat(e.target.value))}
+      />
+
+      <h2 style={{ marginTop: '40px' }}>📈 Εβδομαδιαίο Γράφημα Βάρους & BMI</h2>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={weightSummary}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="day" />
+          <YAxis yAxisId="left" orientation="left" />
+          <YAxis yAxisId="right" orientation="right" />
+          <Tooltip />
+          <Legend />
+          <Bar yAxisId="left" dataKey="weight" fill="#8884d8" name="Βάρος (kg)" />
+          <Bar yAxisId="right" dataKey="bmi" fill="#82ca9d" name="BMI" />
+        </BarChart>
+      </ResponsiveContainer>
+
       {Object.entries(plan).map(([day, items]) => {
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
         items.forEach(entry => {
@@ -98,6 +133,8 @@ export default function App() {
         });
         const totalKcal = kcal(totalP, totalF, totalC);
         const netKcal = totalKcal - burn;
+        const weight = weights[day];
+        const bmi = calculateBMI(weight, height);
 
         return (
           <div key={day} style={{ marginBottom: '40px' }}>
@@ -153,9 +190,12 @@ export default function App() {
               <label>Βάρος σώματος (kg): </label>
               <input
                 type="number"
-                value={weights[day] || ''}
+                value={weight || ''}
                 onChange={e => handleWeightChange(day, e.target.value)}
               />
+              {bmi && (
+                <span style={{ marginLeft: '10px' }}>BMI: <strong>{bmi}</strong></span>
+              )}
             </div>
           </div>
         );
@@ -163,4 +203,5 @@ export default function App() {
     </div>
   );
 }
+
 
