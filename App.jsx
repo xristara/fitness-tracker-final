@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Αφαιρούμε τα imports του recharts εφόσον δεν χρησιμοποιείται πλέον το γράφημα
 
 const months = [
   'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
@@ -17,7 +16,7 @@ const foodDatabase = {
   'mashedPotatoes': { name: 'Πουρές Πατάτας', protein: 2, fat: 5, carbs: 15, unit: 'g' }, // σπιτικός, με λίγο βούτυρο/γάλα
 
   // Πρωτεΐνες (Κρέας, Ψάρι, Αυγά, Όσπρια)
-  'egg': { name: 'Αυγό', protein: 6, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
+  'egg': { name: 'Αυγό', protein: 13, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
   'chickenBreast': { name: 'Στήθος Κοτόπουλου', protein: 31, fat: 3.6, carbs: 0, unit: 'g' },
   'salmon': { name: 'Σολομός', protein: 20, fat: 13, carbs: 0, unit: 'g' },
   'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
@@ -57,8 +56,7 @@ const foodDatabase = {
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'Pure whey isolat AM ': { name: 'whey', protein: 27, fat: 0,5, carbs: 1,2, unit: 'g' }, // ανά 1 τεμάχιο μπάρας (τυπική)
-  // Έχουν αφαιρεθεί αόριστες τροφές όπως "Σμούθι φρούτων", "Γλυκό με stevia"
+  'proteinBar': { name: 'Μπάρα Πρωτεΐνης', protein: 20, fat: 10, carbs: 30, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο μπάρας (τυπική)
 };
 
 
@@ -328,11 +326,24 @@ export default function App() {
     setWeights({ ...weights, [day]: value });
   };
 
-  const handleHistoryChange = (year, month, value) => {
+  const handleHistoryChange = (year, month, value, type) => {
     const updated = { ...history };
-    const weight = parseFloat(value);
-    updated[year][month].weight = weight;
-    updated[year][month].bmi = calculateBMI(weight, height);
+    const parsedValue = parseFloat(value);
+
+    // Ensure the year and month objects exist
+    if (!updated[year]) updated[year] = {};
+    if (!updated[year][month]) updated[year][month] = { weight: '', bmi: '' };
+
+    if (type === 'weight') {
+      updated[year][month].weight = isNaN(parsedValue) ? '' : parsedValue;
+      // Recalculate BMI if weight changes
+      updated[year][month].bmi = calculateBMI(parsedValue, height);
+    } else if (type === 'bmi') {
+      updated[year][month].bmi = isNaN(parsedValue) ? '' : parsedValue;
+      // We usually calculate BMI from weight, not the other way around.
+      // If you want to input BMI directly, you'd need a way to deduce weight or accept BMI as a primary input.
+      // For now, BMI is derived from weight.
+    }
     setHistory(updated);
   };
 
@@ -580,38 +591,53 @@ export default function App() {
         );
       })}
 
-      <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI (2025 - 2050)</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ background: '#ddd' }}>
-            <th>Έτος</th>
-            <th>Μήνας</th>
-            <th>Βάρος (kg)</th>
-            <th>BMI</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(history).map(([year, monthsObj]) => (
-            Object.entries(monthsObj).map(([month, values], idx) => (
-              <tr key={`${year}-${month}`}>
-                {idx === 0 && (
-                  <td rowSpan={12} style={{ verticalAlign: 'top', fontWeight: 'bold' }}>{year}</td>
-                )}
-                <td>{month}</td>
-                <td>
-                  <input
-                    type="number"
-                    value={values.weight || ''}
-                    onChange={e => handleHistoryChange(year, month, e.target.value)}
-                    style={{ width: '80px' }}
-                  />
-                </td>
-                <td>{values.bmi || ''}</td>
+      <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI</h2>
+      <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Added overflow for horizontal scrolling */}
+        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}> {/* minWidth to ensure horizontal layout */}
+          <thead>
+            <tr>
+              <th rowSpan="2" style={{ background: '#ddd', padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>Έτος</th>
+              {months.map(month => (
+                <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
+              ))}
+            </tr>
+            <tr>
+              {months.map(month => (
+                <React.Fragment key={`${month}-sub`}>
+                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
+                  <th style={{ background: '#f0f8ff', padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
+                </React.Fragment>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(history).sort().map(year => (
+              <tr key={year}>
+                <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
+                {months.map(month => {
+                  const values = history[year][month];
+                  return (
+                    <React.Fragment key={`${year}-${month}-data`}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={values.weight || ''}
+                          onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
+                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: '#555' }}>
+                        {values.bmi || ''}
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
               </tr>
-            ))
-          ))}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
