@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
 } from 'recharts';
@@ -114,6 +114,8 @@ export default function App() {
     setHistory(updated);
   };
 
+  // Η `weightSummary` δεν χρειάζεται πλέον αν δεν υπάρχει γράφημα,
+  // αλλά την αφήνω προς το παρόν αν θέλετε να την χρησιμοποιήσετε αλλού.
   const weightSummary = Object.entries(weights).map(([day, weight]) => ({
     day,
     weight: parseFloat(weight),
@@ -161,6 +163,8 @@ export default function App() {
         onChange={(e) => setHeight(parseFloat(e.target.value))}
       />
 
+      {/* ΑΦΑΙΡΕΘΗΚΕ ΤΟ ΚΟΜΜΑΤΙ ΓΙΑ ΤΟ ΓΡΑΦΗΜΑ ΒΑΡΟΥΣ & BMI ΕΔΩ */}
+      {/*
       <h2 style={{ marginTop: '40px' }}>📈 Εβδομαδιαίο Γράφημα Βάρους & BMI</h2>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={weightSummary}>
@@ -174,6 +178,7 @@ export default function App() {
           <Bar yAxisId="right" dataKey="bmi" fill="#82ca9d" name="BMI" />
         </BarChart>
       </ResponsiveContainer>
+      */}
 
       {Object.entries(plan).map(([day, items]) => {
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
@@ -259,7 +264,7 @@ export default function App() {
       <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI (2025 - 2050)</h2>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ background: '#ddd' }}>
+          <tr style={{ background: '#ddd' }>
             <th>Έτος</th>
             <th>Μήνας</th>
             <th>Βάρος (kg)</th>
@@ -291,5 +296,3 @@ export default function App() {
     </div>
   );
 }
-
-
