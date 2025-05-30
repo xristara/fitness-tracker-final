@@ -22,7 +22,7 @@ const foodDatabase = {
   'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
   'tunaInWater': { name: 'Τόνος σε Νερό', protein: 25, fat: 0.5, carbs: 0, unit: 'g' },
   'fishWhite': { name: 'Λευκό Ψάρι', protein: 18, fat: 1, carbs: 0, unit: 'g' },
-  'chickenthigh': { name: 'Μπουτι κότας', protein: 26, fat: 6, carbs: 0, unit: 'g' },
+  'chickenthigh': { name: 'Μπούτι κοτόπουλου', protein: 26, fat: 6, carbs: 0, unit: 'g' },
   'mincedMeatLean': { name: 'Κιμάς Άπαχος', protein: 20, fat: 15, carbs: 0, unit: 'g' }, // βοδινός άπαχος
   'fetaCheese': { name: 'Φέτα', protein: 14, fat: 21, carbs: 4, unit: 'g' },
 
@@ -56,7 +56,7 @@ const foodDatabase = {
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'Pure isolat AM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
+  'PureisolatAM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
 };
 
 
@@ -113,7 +113,7 @@ const initialPlan = {
     ]},
     { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'greekYogurt2pct', quantity: 100 }] }, // Αντικατάσταση "Σμούθι φρούτων"
     { meal: 'Βραδινό', type: 'meal', ingredients: [
-        { foodId: 'Μπουτι κότας', quantity: 150 },
+        { foodId: 'chickenthigh', quantity: 150 },
         { foodId: 'zucchini', quantity: 100 }
     ]},
     { type: 'activity', activity: 'Τρέξιμο 30λ', burn: 400 }
@@ -123,7 +123,7 @@ const initialPlan = {
         { foodId: 'breadWholeWheat', quantity: 60 }, // π.χ. 2 φέτες ψωμί
         { foodId: 'egg', quantity: 2 }
     ]},
-    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'WHEY', quantity: 30 }] }, 
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'PureisolatAM', quantity: 30 }] }, 
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
         { foodId: 'mincedMeatLean', quantity: 150 },
         { foodId: 'riceCooked', quantity: 200 }
