@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer
-} from 'recharts';
+// Αφαιρούμε τα imports του recharts εφόσον δεν χρησιμοποιείται πλέον το γράφημα
+// import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
 
 const months = [
   'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
@@ -88,11 +87,64 @@ function generateYearHistory(start = 2025, end = 2050) {
   return result;
 }
 
+// ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΘΕΡΜΙΔΩΝ (BMR + TDEE + ΣΤΟΧΟΣ)
+function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, goal) {
+  if (!weight || !heightCm || !age || !gender || !activityLevel || !goal) return null;
+
+  // Μετατροπή ύψους από μέτρα σε εκατοστά
+  const heightInCm = heightCm * 100;
+
+  let bmr;
+  // Mifflin-St Jeor Equation
+  if (gender === 'male') {
+    bmr = (10 * weight) + (6.25 * heightInCm) - (5 * age) + 5;
+  } else { // female
+    bmr = (10 * weight) + (6.25 * heightInCm) - (5 * age) - 161;
+  }
+
+  // Activity Factor (Typical values)
+  const activityFactors = {
+    sedentary: 1.2, // little or no exercise
+    light: 1.375, // light exercise/sports 1-3 days/week
+    moderate: 1.55, // moderate exercise/sports 3-5 days/week
+    active: 1.725, // hard exercise/sports 6-7 days a week
+    veryActive: 1.9 // very hard exercise/physical job
+  };
+
+  const tdee = bmr * activityFactors[activityLevel];
+
+  // Adjust for Goal
+  let finalCalories = tdee;
+  switch (goal) {
+    case 'bulk':
+      finalCalories += 300; // Προσθήκη θερμίδων για όγκο
+      break;
+    case 'cut':
+      finalCalories -= 500; // Αφαίρεση θερμίδων για γράμμωση
+      break;
+    case 'maintain':
+    default:
+      // Διατήρηση
+      break;
+  }
+
+  return Math.round(finalCalories);
+}
+
+
 export default function App() {
   const [plan, setPlan] = useState(initialPlan);
   const [weights, setWeights] = useState({});
-  const [height, setHeight] = useState(1.7);
+  const [height, setHeight] = useState(1.7); // Ύψος σε μέτρα
+  const [age, setAge] = useState(30); // Νέο state για την ηλικία
+  const [gender, setGender] = useState('male'); // Νέο state για το φύλο
+  const [activityLevel, setActivityLevel] = useState('moderate'); // Νέο state για το επίπεδο δραστηριότητας
+  const [goal, setGoal] = useState('maintain'); // Νέο state για τον στόχο
   const [history, setHistory] = useState(generateYearHistory());
+
+  // State για τις υπολογιζόμενες ημερήσιες θερμίδες
+  const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
+
 
   const handleChange = (day, idx, field, value) => {
     const updated = { ...plan };
@@ -151,34 +203,69 @@ export default function App() {
     }
   }, [weights, height]);
 
+  // useEffect για τον υπολογισμό των ημερήσιων θερμίδων όταν αλλάζουν τα σχετικά δεδομένα
+  useEffect(() => {
+    const currentWeight = Object.values(weights)[0] || 70; // Χρησιμοποιούμε το βάρος της Δευτέρας ως αρχικό ή μια default τιμή
+    const calculatedCalories = calculateDailyCalories(
+      parseFloat(currentWeight),
+      parseFloat(height),
+      parseInt(age),
+      gender,
+      activityLevel,
+      goal
+    );
+    setDailyCalorieTarget(calculatedCalories);
+  }, [weights, height, age, gender, activityLevel, goal]);
+
+
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1 style={{ textAlign: 'center' }}>📊 Εβδομαδιαίο Πλάνο Διατροφής & Βάρους</h1>
 
-      <h2>📏 Ύψος (σε μέτρα):</h2>
-      <input
-        type="number"
-        step="0.01"
-        value={height}
-        onChange={(e) => setHeight(parseFloat(e.target.value))}
-      />
-
-      {/* ΑΦΑΙΡΕΘΗΚΕ ΤΟ ΚΟΜΜΑΤΙ ΓΙΑ ΤΟ ΓΡΑΦΗΜΑ ΒΑΡΟΥΣ & BMI ΕΔΩ */}
-      {/*
-      <h2 style={{ marginTop: '40px' }}>📈 Εβδομαδιαίο Γράφημα Βάρους & BMI</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={weightSummary}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="day" />
-          <YAxis yAxisId="left" orientation="left" />
-          <YAxis yAxisId="right" orientation="right" />
-          <Tooltip />
-          <Legend />
-          <Bar yAxisId="left" dataKey="weight" fill="#8884d8" name="Βάρος (kg)" />
-          <Bar yAxisId="right" dataKey="bmi" fill="#82ca9d" name="BMI" />
-        </BarChart>
-      </ResponsiveContainer>
-      */}
+      <div style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
+        <h2>Πληροφορίες Χρήστη & Στόχος</h2>
+        <div>
+          <label>📏 Ύψος (σε μέτρα): </label>
+          <input
+            type="number"
+            step="0.01"
+            value={height}
+            onChange={(e) => setHeight(parseFloat(e.target.value))}
+            style={{ marginRight: '20px' }}
+          />
+          <label>🎂 Ηλικία: </label>
+          <input
+            type="number"
+            value={age}
+            onChange={(e) => setAge(parseInt(e.target.value))}
+            style={{ width: '60px', marginRight: '20px' }}
+          />
+          <label>🚻 Φύλο: </label>
+          <select value={gender} onChange={(e) => setGender(e.target.value)} style={{ marginRight: '20px' }}>
+            <option value="male">Άνδρας</option>
+            <option value="female">Γυναίκα</option>
+          </select>
+          <label>🏃 Επίπεδο Δραστηριότητας: </label>
+          <select value={activityLevel} onChange={(e) => setActivityLevel(e.target.value)} style={{ marginRight: '20px' }}>
+            <option value="sedentary">Καθιστική (Ελάχιστη άσκηση)</option>
+            <option value="light">Ελαφριά (1-3 φορές/εβδ.)</option>
+            <option value="moderate">Μέτρια (3-5 φορές/εβδ.)</option>
+            <option value="active">Ενεργή (6-7 φορές/εβδ.)</option>
+            <option value="veryActive">Πολύ Ενεργή (Σκληρή άσκηση/Φυσική εργασία)</option>
+          </select>
+          <label>🎯 Στόχος: </label>
+          <select value={goal} onChange={(e) => setGoal(e.target.value)}>
+            <option value="maintain">Διατήρηση</option>
+            <option value="bulk">Όγκος</option>
+            <option value="cut">Γράμμωση</option>
+          </select>
+        </div>
+        {dailyCalorieTarget && (
+          <h3 style={{ marginTop: '15px' }}>
+            Συνιστώμενες Ημερήσιες Θερμίδες: <span style={{ color: '#007bff' }}>{dailyCalorieTarget} kcal</span>
+          </h3>
+        )}
+      </div>
 
       {Object.entries(plan).map(([day, items]) => {
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
@@ -264,7 +351,7 @@ export default function App() {
       <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI (2025 - 2050)</h2>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ background: '#ddd' }>
+          <tr style={{ background: '#ddd' }}>
             <th>Έτος</th>
             <th>Μήνας</th>
             <th>Βάρος (kg)</th>
