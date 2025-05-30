@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 // Αφαιρούμε τα imports του recharts εφόσον δεν χρησιμοποιείται πλέον το γράφημα
-// import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
 
 const months = [
   'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
@@ -8,62 +7,195 @@ const months = [
   'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
 ];
 
+// foodDatabase: Θρεπτικές αξίες ανά 100 γραμμάρια (ή ανά μονάδα όπου αναφέρεται)
+const foodDatabase = {
+  // Δημητριακά, Ψωμί, Ζυμαρικά, Ρύζι
+  'oats': { name: 'Βρώμη', protein: 13, fat: 5, carbs: 66, unit: 'g' },
+  'riceCakes': { name: 'Ρυζογκοφρέτες', protein: 7, fat: 3, carbs: 80, unit: 'g' },
+  'breadWholeWheat': { name: 'Ψωμί Ολικής', protein: 13, fat: 3, carbs: 45, unit: 'g' },
+  'riceCooked': { name: 'Ρύζι Μαγειρεμένο', protein: 2.7, fat: 0.3, carbs: 28, unit: 'g' }, // μαγειρεμένο ρύζι
+  'mashedPotatoes': { name: 'Πουρές Πατάτας', protein: 2, fat: 5, carbs: 15, unit: 'g' }, // σπιτικός, με λίγο βούτυρο/γάλα
+
+  // Πρωτεΐνες (Κρέας, Ψάρι, Αυγά, Όσπρια)
+  'egg': { name: 'Αυγό', protein: 13, fat: 11, carbs: 1.1, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο αυγό (περίπου 50γρ)
+  'chickenBreast': { name: 'Στήθος Κοτόπουλου', protein: 31, fat: 3.6, carbs: 0, unit: 'g' },
+  'salmon': { name: 'Σολομός', protein: 20, fat: 13, carbs: 0, unit: 'g' },
+  'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
+  'tunaInWater': { name: 'Τόνος σε Νερό', protein: 25, fat: 0.5, carbs: 0, unit: 'g' },
+  'fishWhite': { name: 'Λευκό Ψάρι', protein: 18, fat: 1, carbs: 0, unit: 'g' },
+  'turkeyBreast': { name: 'Στήθος Γαλοπούλας', protein: 29, fat: 1, carbs: 0, unit: 'g' },
+  'mincedMeatLean': { name: 'Κιμάς Άπαχος', protein: 20, fat: 15, carbs: 0, unit: 'g' }, // βοδινός άπαχος
+  'fetaCheese': { name: 'Φέτα', protein: 14, fat: 21, carbs: 4.1, unit: 'g' },
+
+  // Γαλακτοκομικά
+  'greekYogurt2pct': { name: 'Γιαούρτι Στραγγιστό 2%', protein: 10, fat: 2, carbs: 4, unit: 'g' },
+  'milkSemiSkimmed': { name: 'Γάλα Ημιάπαχο', protein: 3.3, fat: 1.8, carbs: 4.8, unit: 'ml' },
+  'cheeseCheddar': { name: 'Τυρί Cheddar', protein: 25, fat: 33, carbs: 1.3, unit: 'g' }, // Γενικό τυρί
+
+  // Λαχανικά
+  'avocado': { name: 'Αβοκάντο', protein: 2, fat: 15, carbs: 9, unit: 'g' },
+  'broccoli': { name: 'Μπρόκολο', protein: 2.8, fat: 0.4, carbs: 5.2, unit: 'g' },
+  'lettuce': { name: 'Μαρούλι', protein: 1.4, fat: 0.2, carbs: 2.9, unit: 'g' },
+  'spinach': { name: 'Σπανάκι', protein: 2.9, fat: 0.4, carbs: 3.6, unit: 'g' },
+  'tomato': { name: 'Ντομάτα', protein: 0.9, fat: 0.2, carbs: 3.9, unit: 'g' },
+  'zucchini': { name: 'Κολοκύθι', protein: 1.2, fat: 0.3, carbs: 3.1, unit: 'g' },
+  'carrots': { name: 'Καρότα', protein: 0.9, fat: 0.2, carbs: 9.6, unit: 'g' },
+  'mixedVegetables': { name: 'Μικτά Λαχανικά', protein: 2, fat: 0.5, carbs: 8, unit: 'g' }, // Γενική τιμή
+
+  // Φρούτα
+  'banana': { name: 'Μπανάνα', protein: 1.1, fat: 0.3, carbs: 23, unit: 'g' },
+  'apple': { name: 'Μήλο', protein: 0.3, fat: 0.2, carbs: 14, unit: 'g' },
+  'orangeJuice': { name: 'Χυμός Πορτοκαλιού', protein: 0.7, fat: 0.2, carbs: 11.8, unit: 'ml' },
+  'seasonalFruits': { name: 'Φρούτα Εποχής', protein: 0.5, fat: 0.2, carbs: 15, unit: 'g' }, // Γενική τιμή
+
+  // Ξηροί καρποί, Σπόροι, Βούτυρα
+  'walnuts': { name: 'Καρύδια', protein: 15, fat: 65, carbs: 14, unit: 'g' },
+  'almonds': { name: 'Αμύγδαλα', protein: 21, fat: 49, carbs: 22, unit: 'g' },
+  'peanutButter': { name: 'Φυστικοβούτυρο', protein: 25, fat: 50, carbs: 20, unit: 'g' },
+  'hummus': { name: 'Χούμους', protein: 7.9, fat: 9.6, carbs: 14.3, unit: 'g' },
+  'mixedNuts': { name: 'Ανάμεικτοι Ξηροί Καρποί', protein: 15, fat: 50, carbs: 20, unit: 'g' },
+
+  // Άλλα
+  'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
+  'proteinBar': { name: 'Μπάρα Πρωτεΐνης', protein: 20, fat: 10, carbs: 30, unit: 'τεμάχιο' }, // ανά 1 τεμάχιο μπάρας (τυπική)
+  // Έχουν αφαιρεθεί αόριστες τροφές όπως "Σμούθι φρούτων", "Γλυκό με stevia"
+};
+
+
 const initialPlan = {
   Monday: [
-    { meal: 'Πρωινό', food: 'Αυγά (3) + Αβοκάντο', protein: 21, fat: 30, carbs: 3 },
-    { meal: 'Σνακ 1', food: 'Γιαούρτι + καρύδια', protein: 10, fat: 10, carbs: 5 },
-    { meal: 'Μεσημεριανό', food: 'Κοτόπουλο (200g) + Σαλάτα', protein: 40, fat: 18, carbs: 5 },
-    { meal: 'Σνακ 2', food: 'Μπανάνα', protein: 1, fat: 0, carbs: 20 },
-    { meal: 'Βραδινό', food: 'Σολομός (150g) + Μπρόκολο', protein: 30, fat: 15, carbs: 4 },
-    { activity: 'Γυμναστήριο (βάρη)', burn: 600 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'egg', quantity: 3 }, // 3 τεμάχια αυγών
+        { foodId: 'avocado', quantity: 70 } // 70 γραμμάρια αβοκάντο
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [
+        { foodId: 'greekYogurt2pct', quantity: 150 }, // 150 γραμμάρια γιαούρτι
+        { foodId: 'walnuts', quantity: 20 } // 20 γραμμάρια καρύδια
+    ]},
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'chickenBreast', quantity: 200 }, // 200 γραμμάρια κοτόπουλο
+        { foodId: 'lettuce', quantity: 100 } // 100 γραμμάρια μαρούλι (σαλάτα)
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'banana', quantity: 120 }] }, // 120 γραμμάρια μπανάνα
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'salmon', quantity: 150 }, // 150 γραμμάρια σολομός
+        { foodId: 'broccoli', quantity: 100 } // 100 γραμμάρια μπρόκολο
+    ]},
+    { type: 'activity', activity: 'Γυμναστήριο (βάρη)', burn: 600 }
   ],
   Tuesday: [
-    { meal: 'Πρωινό', food: 'Ομελέτα με μανιτάρια', protein: 25, fat: 22, carbs: 4 },
-    { meal: 'Σνακ 1', food: 'Αμύγδαλα', protein: 6, fat: 14, carbs: 6 },
-    { meal: 'Μεσημεριανό', food: 'Μοσχάρι + Σπανάκι', protein: 45, fat: 20, carbs: 4 },
-    { meal: 'Σνακ 2', food: 'Μήλο', protein: 0, fat: 0, carbs: 20 },
-    { meal: 'Βραδινό', food: 'Τόνος + ντομάτα', protein: 28, fat: 12, carbs: 5 },
-    { activity: 'Περπάτημα 60λ', burn: 300 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'egg', quantity: 2 },
+        { foodId: 'mixedVegetables', quantity: 100 } // Για τα μανιτάρια + άλλα λαχανικά
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'almonds', quantity: 30 }] },
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'beefLean', quantity: 180 },
+        { foodId: 'spinach', quantity: 100 }
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'apple', quantity: 150 }] },
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'tunaInWater', quantity: 150 },
+        { foodId: 'tomato', quantity: 100 }
+    ]},
+    { type: 'activity', activity: 'Περπάτημα 60λ', burn: 300 }
   ],
   Wednesday: [
-    { meal: 'Πρωινό', food: 'Βρώμη με γάλα', protein: 12, fat: 8, carbs: 30 },
-    { meal: 'Σνακ 1', food: 'Ρυζογκοφρέτες + φυστικοβούτυρο', protein: 6, fat: 10, carbs: 15 },
-    { meal: 'Μεσημεριανό', food: 'Ψάρι + λαχανικά', protein: 35, fat: 14, carbs: 6 },
-    { meal: 'Σνακ 2', food: 'Σμούθι φρούτων', protein: 2, fat: 0, carbs: 25 },
-    { meal: 'Βραδινό', food: 'Γαλοπούλα + κολοκύθι', protein: 28, fat: 10, carbs: 3 },
-    { activity: 'Τρέξιμο 30λ', burn: 400 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'oats', quantity: 50 },
+        { foodId: 'milkSemiSkimmed', quantity: 200 }
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [
+        { foodId: 'riceCakes', quantity: 20 }, // 2 ρυζογκοφρέτες περίπου 20γρ
+        { foodId: 'peanutButter', quantity: 20 }
+    ]},
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'fishWhite', quantity: 180 },
+        { foodId: 'mixedVegetables', quantity: 150 }
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'greekYogurt2pct', quantity: 100 }] }, // Αντικατάσταση "Σμούθι φρούτων"
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'turkeyBreast', quantity: 150 },
+        { foodId: 'zucchini', quantity: 100 }
+    ]},
+    { type: 'activity', activity: 'Τρέξιμο 30λ', burn: 400 }
   ],
   Thursday: [
-    { meal: 'Πρωινό', food: 'Τοστ με αυγό', protein: 18, fat: 14, carbs: 20 },
-    { meal: 'Σνακ 1', food: 'Μπάρα πρωτεΐνης', protein: 15, fat: 7, carbs: 12 },
-    { meal: 'Μεσημεριανό', food: 'Κιμάς με ρύζι', protein: 40, fat: 18, carbs: 35 },
-    { meal: 'Σνακ 2', food: 'Καρότα + χούμους', protein: 2, fat: 5, carbs: 10 },
-    { meal: 'Βραδινό', food: 'Αυγά + σαλάτα', protein: 20, fat: 18, carbs: 3 },
-    { activity: 'Γιόγκα 45λ', burn: 250 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'breadWholeWheat', quantity: 60 }, // π.χ. 2 φέτες ψωμί
+        { foodId: 'egg', quantity: 2 }
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'proteinBar', quantity: 60 }] }, // π.χ. 60γρ μπάρα
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'mincedMeatLean', quantity: 150 },
+        { foodId: 'riceCooked', quantity: 200 }
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [
+        { foodId: 'carrots', quantity: 100 },
+        { foodId: 'hummus', quantity: 50 }
+    ]},
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'egg', quantity: 3 },
+        { foodId: 'lettuce', quantity: 100 }
+    ]},
+    { type: 'activity', activity: 'Γιόγκα 45λ', burn: 250 }
   ],
   Friday: [
-    { meal: 'Πρωινό', food: 'Σαλάτα με τόνο', protein: 25, fat: 12, carbs: 6 },
-    { meal: 'Σνακ 1', food: 'Φρούτα εποχής', protein: 1, fat: 0, carbs: 18 },
-    { meal: 'Μεσημεριανό', food: 'Στήθος κοτόπουλο + πουρές', protein: 40, fat: 12, carbs: 30 },
-    { meal: 'Σνακ 2', food: 'Γιαούρτι + μέλι', protein: 10, fat: 4, carbs: 20 },
-    { meal: 'Βραδινό', food: 'Ομελέτα με λαχανικά', protein: 22, fat: 15, carbs: 5 },
-    { activity: 'Περπάτημα 45λ', burn: 250 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'tunaInWater', quantity: 100 },
+        { foodId: 'lettuce', quantity: 100 }
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'seasonalFruits', quantity: 150 }] },
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'chickenBreast', quantity: 200 },
+        { foodId: 'mashedPotatoes', quantity: 150 }
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [
+        { foodId: 'greekYogurt2pct', quantity: 150 },
+        { foodId: 'honey', quantity: 15 }
+    ]},
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'egg', quantity: 2 },
+        { foodId: 'mixedVegetables', quantity: 100 }
+    ]},
+    { type: 'activity', activity: 'Περπάτημα 45λ', burn: 250 }
   ],
   Saturday: [
-    { meal: 'Πρωινό', food: 'Αυγά + κασέρι', protein: 20, fat: 20, carbs: 1 },
-    { meal: 'Σνακ 1', food: 'Σμούθι με σπανάκι', protein: 4, fat: 2, carbs: 10 },
-    { meal: 'Μεσημεριανό', food: 'Σουβλάκια κοτόπουλο + πατάτες φούρνου', protein: 35, fat: 18, carbs: 30 },
-    { meal: 'Σνακ 2', food: 'Ξηροί καρποί', protein: 6, fat: 12, carbs: 8 },
-    { meal: 'Βραδινό', food: 'Ψητά λαχανικά + φέτα', protein: 15, fat: 14, carbs: 6 },
-    { activity: 'Ξεκούραση', burn: 0 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'egg', quantity: 2 },
+        { foodId: 'cheeseCheddar', quantity: 30 }
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [
+        { foodId: 'greekYogurt2pct', quantity: 100 }, // Αντικατάσταση "Σμούθι με σπανάκι"
+        { foodId: 'spinach', quantity: 50 } // Προσθήκη σπανάκι για την ιδέα
+    ]},
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'chickenBreast', quantity: 150 }, // Για σουβλάκια
+        { foodId: 'mashedPotatoes', quantity: 100 } // Για πατάτες φούρνου
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'mixedNuts', quantity: 30 }] },
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'mixedVegetables', quantity: 200 },
+        { foodId: 'fetaCheese', quantity: 50 }
+    ]},
+    { type: 'activity', activity: 'Ξεκούραση', burn: 0 }
   ],
   Sunday: [
-    { meal: 'Πρωινό', food: 'Πανκέικς βρώμης', protein: 15, fat: 10, carbs: 35 },
-    { meal: 'Σνακ 1', food: 'Χυμός πορτοκάλι', protein: 1, fat: 0, carbs: 22 },
-    { meal: 'Μεσημεριανό', food: 'Λαδερό + φέτα', protein: 20, fat: 18, carbs: 20 },
-    { meal: 'Σνακ 2', food: 'Γλυκό με stevia', protein: 2, fat: 5, carbs: 15 },
-    { meal: 'Βραδινό', food: 'Τονοσαλάτα', protein: 25, fat: 10, carbs: 3 },
-    { activity: 'Περπάτημα ελαφρύ', burn: 150 }
+    { meal: 'Πρωινό', type: 'meal', ingredients: [
+        { foodId: 'oats', quantity: 50 }, // Για pancakes βρώμης
+        { foodId: 'egg', quantity: 1 } // Για pancakes
+    ]},
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'orangeJuice', quantity: 200 }] },
+    { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
+        { foodId: 'mixedVegetables', quantity: 250 }, // Για λαδερό
+        { foodId: 'fetaCheese', quantity: 50 }
+    ]},
+    { meal: 'Σνακ 2', type: 'meal', ingredients: [{ foodId: 'greekYogurt2pct', quantity: 100 }] }, // Αντικατάσταση "Γλυκό με stevia"
+    { meal: 'Βραδινό', type: 'meal', ingredients: [
+        { foodId: 'tunaInWater', quantity: 150 },
+        { foodId: 'lettuce', quantity: 100 }
+    ]},
+    { type: 'activity', activity: 'Περπάτημα ελαφρύ', burn: 150 }
   ]
 };
 
@@ -85,6 +217,35 @@ function generateYearHistory(start = 2025, end = 2050) {
     });
   }
   return result;
+}
+
+// Συνάρτηση για τον υπολογισμό μακροστοιχείων ενός γεύματος
+function calculateMealMacros(ingredients) {
+  let protein = 0;
+  let fat = 0;
+  let carbs = 0;
+
+  ingredients.forEach(item => {
+    const foodInfo = foodDatabase[item.foodId];
+    if (foodInfo) {
+      // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g
+      // Αν η μονάδα είναι 'τεμάχιο' ή 'ml', ο πολλαπλασιαστής είναι 1 (η ποσότητα είναι ο αριθμός τεμαχίων/ml)
+      // Αλλιώς, η ποσότητα είναι σε γραμμάρια, οπότε διαιρούμε με 100
+      const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
+        ? item.quantity
+        : item.quantity / 100;
+
+      protein += foodInfo.protein * multiplier;
+      fat += foodInfo.fat * multiplier;
+      carbs += foodInfo.carbs * multiplier;
+    }
+  });
+
+  return {
+    protein: parseFloat(protein.toFixed(1)),
+    fat: parseFloat(fat.toFixed(1)),
+    carbs: parseFloat(carbs.toFixed(1))
+  };
 }
 
 // ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΘΕΡΜΙΔΩΝ (BMR + TDEE + ΣΤΟΧΟΣ)
@@ -146,12 +307,21 @@ export default function App() {
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
 
 
-  const handleChange = (day, idx, field, value) => {
-    const updated = { ...plan };
-    updated[day][idx][field] = ['protein', 'fat', 'carbs', 'burn'].includes(field)
-      ? parseInt(value) || 0
-      : value;
-    setPlan(updated);
+  const handleMealIngredientChange = (day, mealIdx, ingredientIdx, field, value) => {
+    const updatedPlan = { ...plan };
+    const entry = updatedPlan[day][mealIdx];
+
+    if (entry.type === 'meal') {
+      const updatedIngredients = [...entry.ingredients];
+      updatedIngredients[ingredientIdx] = {
+        ...updatedIngredients[ingredientIdx],
+        [field]: parseFloat(value) || 0 // Ποσότητα μπορεί να είναι δεκαδική
+      };
+      entry.ingredients = updatedIngredients;
+    } else if (entry.type === 'activity') {
+        entry[field] = parseInt(value) || 0;
+    }
+    setPlan(updatedPlan);
   };
 
   const handleWeightChange = (day, value) => {
@@ -165,14 +335,6 @@ export default function App() {
     updated[year][month].bmi = calculateBMI(weight, height);
     setHistory(updated);
   };
-
-  // Η `weightSummary` δεν χρειάζεται πλέον αν δεν υπάρχει γράφημα,
-  // αλλά την αφήνω προς το παρόν αν θέλετε να την χρησιμοποιήσετε αλλού.
-  const weightSummary = Object.entries(weights).map(([day, weight]) => ({
-    day,
-    weight: parseFloat(weight),
-    bmi: calculateBMI(parseFloat(weight), height)
-  }));
 
   // Αυτόματη αποθήκευση τρέχοντος εβδομαδιαίου βάρους στο τρέχον μήνα/έτος
   useEffect(() => {
@@ -205,9 +367,15 @@ export default function App() {
 
   // useEffect για τον υπολογισμό των ημερήσιων θερμίδων όταν αλλάζουν τα σχετικά δεδομένα
   useEffect(() => {
-    const currentWeight = Object.values(weights)[0] || 70; // Χρησιμοποιούμε το βάρος της Δευτέρας ως αρχικό ή μια default τιμή
+    // Εύρεση του πρώτου καταχωρημένου βάρους ή default τιμή
+    let currentWeight = 70; // Default βάρος
+    const firstDayWithWeight = Object.keys(weights).find(day => weights[day]);
+    if (firstDayWithWeight) {
+      currentWeight = parseFloat(weights[firstDayWithWeight]);
+    }
+
     const calculatedCalories = calculateDailyCalories(
-      parseFloat(currentWeight),
+      currentWeight,
       parseFloat(height),
       parseInt(age),
       gender,
@@ -267,17 +435,20 @@ export default function App() {
         )}
       </div>
 
-      {Object.entries(plan).map(([day, items]) => {
+      {Object.entries(plan).map(([day, entriesForDay]) => { // Έχω αλλάξει το 'items' σε 'entriesForDay' για να είναι πιο σαφές
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
-        items.forEach(entry => {
-          if (entry.meal) {
-            totalP += entry.protein;
-            totalF += entry.fat;
-            totalC += entry.carbs;
-          } else if (entry.activity) {
+
+        entriesForDay.forEach(entry => {
+          if (entry.type === 'meal') {
+            const mealMacros = calculateMealMacros(entry.ingredients);
+            totalP += mealMacros.protein;
+            totalF += mealMacros.fat;
+            totalC += mealMacros.carbs;
+          } else if (entry.type === 'activity') {
             burn += entry.burn;
           }
         });
+
         const totalKcal = kcal(totalP, totalF, totalC);
         const netKcal = totalKcal - burn;
         const weight = weights[day];
@@ -290,33 +461,94 @@ export default function App() {
               <thead>
                 <tr style={{ background: '#eee' }}>
                   <th>Γεύμα</th>
-                  <th>Περιγραφή</th>
-                  <th>Πρωτεΐνη</th>
-                  <th>Λίπος</th>
-                  <th>Υδατ.</th>
-                  <th>Θερμίδες</th>
+                  <th>Τροφή / Συστατικό</th>
+                  <th>Ποσότητα</th>
+                  <th>Πρωτεΐνη (g)</th>
+                  <th>Λίπος (g)</th>
+                  <th>Υδατ. (g)</th>
+                  <th>Θερμίδες (kcal)</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((entry, idx) =>
-                  entry.meal ? (
-                    <tr key={idx}>
-                      <td><input value={entry.meal} onChange={e => handleChange(day, idx, 'meal', e.target.value)} /></td>
-                      <td><input value={entry.food} onChange={e => handleChange(day, idx, 'food', e.target.value)} /></td>
-                      <td><input type="number" value={entry.protein} onChange={e => handleChange(day, idx, 'protein', e.target.value)} /></td>
-                      <td><input type="number" value={entry.fat} onChange={e => handleChange(day, idx, 'fat', e.target.value)} /></td>
-                      <td><input type="number" value={entry.carbs} onChange={e => handleChange(day, idx, 'carbs', e.target.value)} /></td>
-                      <td>{kcal(entry.protein, entry.fat, entry.carbs)}</td>
-                    </tr>
+                {entriesForDay.map((entry, mealIdx) => (
+                  entry.type === 'meal' ? (
+                    <>
+                      <tr key={`${day}-${mealIdx}-title`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
+                        <td rowSpan={entry.ingredients.length + 1}>{entry.meal}</td> {/* Meal name */}
+                        <td colSpan="6"></td> {/* Empty cells for spacing */}
+                      </tr>
+                      {entry.ingredients.map((ingredient, ingredientIdx) => {
+                        const foodInfo = foodDatabase[ingredient.foodId];
+                        // Αν δεν βρεθεί η τροφή, δείχνουμε 0 και προειδοποίηση
+                        if (!foodInfo) {
+                          console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
+                          return (
+                            <tr key={`${day}-${mealIdx}-${ingredientIdx}`} style={{ color: 'red' }}>
+                              <td>Άγνωστη Τροφή: {ingredient.foodId}</td>
+                              <td>{ingredient.quantity}</td>
+                              <td colSpan="4">Δεδομένα δεν βρέθηκαν</td>
+                              <td>0</td>
+                            </tr>
+                          );
+                        }
+
+                        const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
+                          ? ingredient.quantity
+                          : ingredient.quantity / 100;
+
+                        const p = parseFloat((foodInfo.protein * multiplier).toFixed(1));
+                        const f = parseFloat((foodInfo.fat * multiplier).toFixed(1));
+                        const c = parseFloat((foodInfo.carbs * multiplier).toFixed(1));
+                        const itemKcal = kcal(p, f, c);
+
+                        return (
+                          <tr key={`${day}-${mealIdx}-${ingredientIdx}`}>
+                            <td>
+                              {foodInfo.name} {/* Εμφανίζει το "όνομα" της τροφής */}
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                step="0.1" // Επιδέχεται δεκαδικές ποσότητες
+                                value={ingredient.quantity || ''}
+                                onChange={e => handleMealIngredientChange(day, mealIdx, ingredientIdx, 'quantity', e.target.value)}
+                                style={{ width: '80px' }}
+                              /> {foodInfo.unit}
+                            </td>
+                            <td>{p}</td>
+                            <td>{f}</td>
+                            <td>{c}</td>
+                            <td>{itemKcal}</td>
+                          </tr>
+                        );
+                      })}
+                      {/* Σύνολα για το κάθε γεύμα */}
+                      <tr style={{ background: '#f0f0f0', fontWeight: 'bold' }}>
+                        <td colSpan="3">Σύνολο Γεύματος</td>
+                        <td>{calculateMealMacros(entry.ingredients).protein}</td>
+                        <td>{calculateMealMacros(entry.ingredients).fat}</td>
+                        <td>{calculateMealMacros(entry.ingredients).carbs}</td>
+                        <td>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
+                      </tr>
+                    </>
                   ) : (
-                    <tr key={idx}>
+                    // Για δραστηριότητες
+                    <tr key={`${day}-${mealIdx}`}>
                       <td colSpan="5">{entry.activity}</td>
-                      <td><input type="number" value={entry.burn} onChange={e => handleChange(day, idx, 'burn', e.target.value)} /></td>
+                      <td>
+                        <input
+                          type="number"
+                          value={entry.burn || ''}
+                          onChange={e => handleMealIngredientChange(day, mealIdx, null, 'burn', e.target.value)} // null για ingredientIdx
+                          style={{ width: '80px' }}
+                        />
+                      </td>
                     </tr>
                   )
-                )}
-                <tr style={{ background: '#f0f0f0', fontWeight: 'bold' }}>
-                  <td colSpan="5">Σύνολο Θερμίδων</td>
+                ))}
+                {/* Συνολικά για την ημέρα */}
+                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                  <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
                   <td>{totalKcal}</td>
                 </tr>
                 {burn > 0 && (
