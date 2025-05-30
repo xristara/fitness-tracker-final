@@ -22,7 +22,7 @@ const foodDatabase = {
   'beefLean': { name: 'Μοσχάρι Άπαχο', protein: 26, fat: 15, carbs: 0, unit: 'g' },
   'tunaInWater': { name: 'Τόνος σε Νερό', protein: 25, fat: 0.5, carbs: 0, unit: 'g' },
   'fishWhite': { name: 'Λευκό Ψάρι', protein: 18, fat: 1, carbs: 0, unit: 'g' },
-  'Cuisse De Poulet SP': { name: 'Μπουτι κότας', protein: 26, fat: 6, carbs: 0, unit: 'g' },
+  'chickenthigh': { name: 'Μπουτι κότας', protein: 26, fat: 6, carbs: 0, unit: 'g' },
   'mincedMeatLean': { name: 'Κιμάς Άπαχος', protein: 20, fat: 15, carbs: 0, unit: 'g' }, // βοδινός άπαχος
   'fetaCheese': { name: 'Φέτα', protein: 14, fat: 21, carbs: 4, unit: 'g' },
 
@@ -56,7 +56,7 @@ const foodDatabase = {
 
   // Άλλα
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
-  'PurewheyisolatAM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
+  'Pure isolat AM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
 };
 
 
