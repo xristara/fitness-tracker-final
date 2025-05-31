@@ -1407,7 +1407,7 @@ export default function App() {
             <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#f44336' }}>{Math.round(weeklySummary.carbs)} g</p>
           </div>
           <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #b3e5fc' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }>Συνολικές Καύσεις:</p>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Καύσεις:</p>
             <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#03a9f4' }}>{Math.round(weeklySummary.burnedCalories)} kcal</p>
           </div>
           <div style={{ flex: '1 1 180px', padding: '10px', background: '#e1f5fe', borderRadius: '5px', border: '1px solid #29b6f6' }}>
