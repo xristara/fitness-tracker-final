@@ -325,6 +325,21 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
   return Math.round(Math.max(0, caloriesFromCarbs / 4)); // 4 kcal ανά γραμμάριο υδατανθράκων
 }
 
+// ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
+// comparisonType: 'weight' (μείωση -> πράσινο) ή 'bmi' (μείωση -> πράσινο)
+function getComparisonColor(currentValue, previousValue, comparisonType) {
+  if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue)) {
+    return 'black'; // Εάν δεν υπάρχουν τιμές, μένει μαύρο
+  }
+  
+  if (currentValue < previousValue) {
+    return 'green'; // Έχει πέσει
+  } else if (currentValue > previousValue) {
+    return 'red'; // Έχει ανέβει
+  } else {
+    return 'black'; // Δεν έχει αλλάξει
+  }
+}
 
 export default function App() {
   // Functions to get initial state from localStorage or use defaults
@@ -497,7 +512,7 @@ export default function App() {
         }
         if (currentWeight !== 70) break; // Βρέθηκε βάρος, διακοπή εξωτερικού βρόχου
       }
-    } // <-- Λείπει αυτή η αγκύλη
+    }
 
     const calculatedCalories = calculateDailyCalories(
       currentWeight,
@@ -761,11 +776,31 @@ export default function App() {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(history).sort().map(year => (
+            {Object.keys(history).sort().map((year, yearIndex, sortedYears) => ( // Add yearIndex and sortedYears
               <tr key={year}>
                 <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
-                {months.map(month => {
-                  const values = history[year]?.[month] || { weight: '', bmi: '' }; // Handle potential undefined month
+                {months.map((month, monthIndex) => { // Add monthIndex
+                  const values = history[year]?.[month] || { weight: '', bmi: '' };
+
+                  // Find previous month's data for comparison
+                  let prevWeight = null;
+                  let prevBMI = null;
+
+                  if (monthIndex > 0) {
+                    // Previous month in the same year
+                    const prevMonth = months[monthIndex - 1];
+                    prevWeight = history[year]?.[prevMonth]?.weight;
+                    prevBMI = history[year]?.[prevMonth]?.bmi;
+                  } else if (yearIndex > 0) {
+                    // Previous month is December of the previous year
+                    const prevYear = sortedYears[yearIndex - 1];
+                    prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
+                    prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
+                  }
+
+                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight), 'weight');
+                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI), 'bmi');
+                  
                   return (
                     <React.Fragment key={`${year}-${month}-data`}>
                       <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
@@ -774,10 +809,16 @@ export default function App() {
                           step="0.1"
                           value={values.weight || ''}
                           onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
-                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
+                          style={{ 
+                            width: '60px', 
+                            border: '1px solid #ddd', 
+                            padding: '4px', 
+                            borderRadius: '4px',
+                            color: weightColor // Apply color here
+                          }}
                         />
                       </td>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: '#555' }}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}> {/* Apply color here */}
                         {values.bmi || ''}
                       </td>
                     </React.Fragment>
