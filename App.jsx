@@ -198,7 +198,7 @@ const initialPlan = {
         { foodId: 'mixedVegetables', quantity: 200 },
         { foodId: 'fetaCheese', quantity: 50 }
     ]},
-    { type: 'activity', activity: 'Ξεκούραση', burn: 0 }
+    { type: 'activity', activity: 'Περπάτημα ελαφρύ', burn: 0 }
   ],
   Sunday: [
     { meal: 'Πρωινό', type: 'meal', ingredients: [
