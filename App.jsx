@@ -402,6 +402,15 @@ export default function App() {
     return mergedHistory;
   });
 
+  // State για το επιλεγμένο έτος στο ιστορικό
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(() => {
+    // Attempt to get the most recent year from history if available
+    const yearsInHistory = Object.keys(history).filter(year => Object.keys(history[year]).some(month => history[year][month].weight !== '' || history[year][month].bmi !== ''));
+    return yearsInHistory.length > 0 ? Math.max(...yearsInHistory.map(Number)) : currentYear;
+  });
+
+
   // State για τις υπολογιζόμενες ημερήσιες θερμίδες και μακροστοιχεία
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
   const [dailyProteinTarget, setDailyProteinTarget] = useState(null);
@@ -797,17 +806,17 @@ export default function App() {
   const weightData = [];
   const bmiData = [];
 
-  const sortedYears = Object.keys(history).sort();
-  sortedYears.forEach(year => {
-    months.forEach(month => {
-      const data = history[year]?.[month];
-      if (data && (data.weight || data.bmi)) { // Μόνο αν υπάρχει κάποιο δεδομένο
-        chartLabels.push(`${month.substring(0, 3)} ${year.slice(-2)}`); // π.χ., "Ιαν 25"
-        weightData.push(data.weight ? parseFloat(data.weight) : null);
-        bmiData.push(data.bmi ? parseFloat(data.bmi) : null);
-      }
-    });
+  // Χρησιμοποιούμε μόνο τα δεδομένα του επιλεγμένου έτους
+  const dataForSelectedYear = history[selectedYear] || {};
+  months.forEach(month => {
+    const data = dataForSelectedYear[month];
+    if (data && (data.weight || data.bmi)) { // Μόνο αν υπάρχει κάποιο δεδομένο
+      chartLabels.push(month); // Απλά ο μήνας ως label
+      weightData.push(data.weight ? parseFloat(data.weight) : null);
+      bmiData.push(data.bmi ? parseFloat(data.bmi) : null);
+    }
   });
+
 
   const chartData = {
     labels: chartLabels,
@@ -840,7 +849,7 @@ export default function App() {
       },
       title: {
         display: true,
-        text: 'Ιστορικό Βάρους και BMI',
+        text: `Ιστορικό Βάρους και BMI για το ${selectedYear}`, // Ενημέρωση τίτλου
       },
     },
     scales: {
@@ -927,7 +936,17 @@ export default function App() {
           if (importedData.gender) setGender(importedData.gender);
           if (importedData.activityLevel) setActivityLevel(importedData.activityLevel);
           if (importedData.goal) setGoal(importedData.goal);
-          if (importedData.history) setHistory(importedData.history);
+          if (importedData.history) {
+            // Merge with generated history to ensure all years/months exist
+            const generated = generateYearHistory();
+            const mergedImportedHistory = { ...generated };
+            for (const year in importedData.history) {
+                if (importedData.history.hasOwnProperty(year)) {
+                    mergedImportedHistory[year] = { ...mergedImportedHistory[year], ...importedData.history[year] };
+                }
+            }
+            setHistory(mergedImportedHistory);
+          }
           alert('Δεδομένα εισήχθησαν επιτυχώς!');
         } catch (error) {
           alert('Σφάλμα κατά την εισαγωγή δεδομένων: ' + error.message);
@@ -1306,80 +1325,92 @@ export default function App() {
       })}
 
       <h2 style={{ marginTop: '40px', color: '#333', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>📅 Ιστορικό Βάρους & BMI</h2>
-      <div style={{ overflowX: 'auto', marginBottom: '20px', background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th rowSpan="2" style={{ background: '#ddd', padding: '10px', textAlign: 'left', border: '1px solid #ccc' }}>Έτος</th>
-              {months.map(month => (
-                <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
-              ))}
-            </tr>
-            <tr>
-              {months.map(month => (
-                <React.Fragment key={`${month}-sub`}>
-                  <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
-                  <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
-                </React.Fragment>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(history).sort().map((year, yearIndex, sortedYears) => {
-              const currentYearData = history[year] || {}; // Ensure currentYearData exists
-              return (
-                <tr key={year}>
-                  <td style={{ background: '#eee', fontWeight: 'bold', padding: '10px', border: '1px solid #ccc' }}>{year}</td>
-                  {months.map((month, monthIndex) => {
-                    const values = currentYearData[month] || { weight: '', bmi: '' };
+      <div style={{ marginBottom: '20px', padding: '20px', borderRadius: '8px', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontWeight: 'bold', color: '#666' }}>Επιλέξτε Έτος:</label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+          >
+            {/* Δημιουργία επιλογών για τα έτη που υπάρχουν στο ιστορικό */}
+            {Object.keys(history).sort((a, b) => b - a).map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
 
-                    // Find previous month's data for comparison
-                    let prevWeight = null;
-                    let prevBMI = null;
+        <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Αυτό το div επιτρέπει την οριζόντια κύλιση */}
+          <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {months.map(month => (
+                  <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
+                ))}
+              </tr>
+              <tr>
+                {months.map(month => (
+                  <React.Fragment key={`${month}-sub`}>
+                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
+                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
+                  </React.Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Μόνο μία σειρά για το επιλεγμένο έτος */}
+              <tr>
+                {months.map((month, monthIndex) => {
+                  const values = history[selectedYear]?.[month] || { weight: '', bmi: '' };
 
-                    if (monthIndex > 0) {
-                      // Previous month in the same year
-                      const prevMonth = months[monthIndex - 1];
-                      prevWeight = currentYearData[prevMonth]?.weight;
-                      prevBMI = currentYearData[prevMonth]?.bmi;
-                    } else if (yearIndex > 0) {
-                      // Previous month is December of the previous year
-                      const prevYear = sortedYears[yearIndex - 1];
-                      prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
-                      prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
+                  // Find previous month's data for comparison
+                  let prevWeight = null;
+                  let prevBMI = null;
+
+                  if (monthIndex > 0) {
+                    // Previous month in the same year
+                    const prevMonth = months[monthIndex - 1];
+                    prevWeight = history[selectedYear]?.[prevMonth]?.weight;
+                    prevBMI = history[selectedYear]?.[prevMonth]?.bmi;
+                  } else {
+                    // If it's January, compare with December of the previous selected year
+                    const prevYear = parseInt(selectedYear) - 1;
+                    if (history[prevYear]) {
+                      prevWeight = history[prevYear]['Δεκέμβριος']?.weight;
+                      prevBMI = history[prevYear]['Δεκέμβριος']?.bmi;
                     }
+                  }
 
-                    const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
-                    const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
+                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
+                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
 
-                    return (
-                      <React.Fragment key={`${year}-${month}-data`}>
-                        <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={values.weight || ''}
-                            onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
-                            style={{
-                              width: '60px',
-                              border: '1px solid #ddd',
-                              padding: '6px',
-                              borderRadius: '4px',
-                              color: weightColor
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
-                          {values.bmi || ''}
-                        </td>
-                      </React.Fragment>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  return (
+                    <React.Fragment key={`${selectedYear}-${month}-data`}>
+                      <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={values.weight || ''}
+                          onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
+                          style={{
+                            width: '60px',
+                            border: '1px solid #ddd',
+                            padding: '6px',
+                            borderRadius: '4px',
+                            color: weightColor
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
+                        {values.bmi || ''}
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', height: '400px' }}>
