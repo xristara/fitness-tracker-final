@@ -248,12 +248,13 @@ function calculateMealMacros(ingredients) {
   ingredients.forEach(item => {
     const foodInfo = foodDatabase[item.foodId];
     if (foodInfo) {
-      // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g
-      // Αν η μονάδα είναι 'τεμάχιο' ή 'ml', ο πολλαπλασιαστής είναι 1 (η ποσότητα είναι ο αριθμός τεμαχίων/ml)
-      // Αλλιώς, η ποσότητα είναι σε γραμμάρια, οπότε διαιρούμε με 100
-      const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
-        ? item.quantity
-        : item.quantity / 100;
+      // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g/100ml
+      let multiplier;
+      if (foodInfo.unit === 'τεμάχιο') {
+        multiplier = item.quantity; // If unit is 'τεμάχιο', quantity is the number of items
+      } else { // For 'g' and 'ml', values are typically per 100g/100ml
+        multiplier = item.quantity / 100; // <-- Αυτό είναι το σωστό για 'ml' και 'g'
+      }
 
       protein += foodInfo.protein * multiplier;
       fat += foodInfo.fat * multiplier;
