@@ -1228,35 +1228,35 @@ export default function App() {
                 ))}
                 {/* Συνολικά για την ημέρα */}
                 <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Σύνολο Ημέρας (Θερμίδες):</td>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Θερμίδες):</td> {/* Αλλαγή εδώ */}
                   <td style={{ padding: '10px', border: '1px solid #ccc' }}>{totalKcal} kcal</td>
                   <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
                 {/* ΝΕΕΣ ΓΡΑΜΜΕΣ ΓΙΑ ΣΥΝΟΛΙΚΑ ΜΑΚΡΟΣΤΟΙΧΕΙΑ ΗΜΕΡΑΣ */}
                 <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Σύνολο Ημέρας (Πρωτεΐνη):</td>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Πρωτεΐνη):</td> {/* Αλλαγή εδώ */}
                   <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalP)} g</td>
                   <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
                 <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Σύνολο Ημέρας (Λιπαρά):</td>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Λιπαρά):</td> {/* Αλλαγή εδώ */}
                   <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalF)} g</td>
                   <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
                 <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Σύνολο Ημέρας (Υδατάνθρακες):</td>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Υδατάνθρακες):</td> {/* Αλλαγή εδώ */}
                   <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalC)} g</td>
                   <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
                 {burn > 0 && (
                   <>
                     <tr style={{ color: 'green', background: '#e6ffe6' }}>
-                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Κατανάλωση θερμίδων από Δραστηριότητες:</td>
+                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Κατανάλωση θερμίδων από Δραστηριότητες:</td> {/* Αλλαγή εδώ */}
                       <td style={{ padding: '10px', border: '1px solid #ccc' }}>-{burn} kcal</td>
                       <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                     </tr>
                     <tr style={{ background: '#ccffcc', fontWeight: 'bold', fontSize: '1.1em' }}>
-                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Καθαρό θερμιδικό ισοζύγιο:</td>
+                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Καθαρό θερμιδικό ισοζύγιο:</td> {/* Αλλαγή εδώ */}
                       <td style={{ padding: '10px', border: '1px solid #ccc' }}>{netKcal} kcal</td>
                       <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                     </tr>
@@ -1407,7 +1407,7 @@ export default function App() {
             <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#f44336' }}>{Math.round(weeklySummary.carbs)} g</p>
           </div>
           <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #b3e5fc' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Καύσεις:</p>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }>Συνολικές Καύσεις:</p>
             <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#03a9f4' }}>{Math.round(weeklySummary.burnedCalories)} kcal</p>
           </div>
           <div style={{ flex: '1 1 180px', padding: '10px', background: '#e1f5fe', borderRadius: '5px', border: '1px solid #29b6f6' }}>
