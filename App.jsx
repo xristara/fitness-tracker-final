@@ -765,7 +765,6 @@ export default function App() {
     } else {
       setDailyProteinTarget(null);
       setDailyFatTarget(null);
-      setDailyCarbsTarget(null);
     }
 
   }, [weights.Sunday, height, age, gender, activityLevel, goal, history]);
@@ -1020,106 +1019,107 @@ export default function App() {
           margin-bottom: 0;
         }
 
-        /* Styles for mobile devices */
+        /* User Info Grid */
+        .user-info-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 20px;
+        }
+
+        /* Styles for mobile devices (screens up to 768px) */
         @media (max-width: 768px) {
-          .user-info-grid {
-            grid-template-columns: 1fr !important; /* Stack columns on small screens */
+          body {
+            font-size: 14px; /* Slightly smaller base font size */
           }
 
+          h1 {
+            font-size: 1.8em;
+          }
+
+          h2 {
+            font-size: 1.5em;
+          }
+
+          h3 {
+            font-size: 1.2em;
+          }
+
+          /* Keep daily targets horizontal but allow wrapping and reduce padding/font */
           .daily-targets-container {
-            flex-direction: column; /* Stack items vertically */
-            align-items: stretch; /* Stretch items to fill width */
-            gap: 10px; /* Space between stacked items */
+            flex-wrap: wrap; /* Already set, but good to re-confirm */
+            justify-content: center; /* Center items if they don't fill the row */
+            gap: 10px; /* Reduce gap */
           }
           .daily-targets-container > div {
-            flex: 1 1 100% !important; /* Make each target item take full width */
-            margin-bottom: 0; /* Remove extra margin if gap is used */
-            padding: 12px; /* Slightly less padding for smaller screens */
+            min-width: 120px; /* Allow smaller width */
+            padding: 10px; /* Reduce padding */
+            flex: 1 1 30%; /* Allow 3 items per row if possible */
           }
           .daily-targets-container h3 {
-            font-size: 0.9em; /* Smaller font for titles */
+            font-size: 0.8em; /* Smaller font for titles */
           }
           .daily-targets-container p {
-            font-size: 1.1em; /* Slightly smaller font for values */
+            font-size: 1em; /* Smaller font for values */
           }
 
+          /* User info grid - allow wrapping to fewer columns but not strictly one */
+          .user-info-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Allow elements to shrink more or wrap to 1 column if extremely small */
+            gap: 15px; /* Slightly reduced gap */
+          }
 
+          /* Tables - make them scrollable horizontally */
           table {
             display: block;
-            overflow-x: auto; /* Enable horizontal scrolling for tables */
-            white-space: nowrap; /* Prevent content from wrapping inside cells */
+            overflow-x: auto; /* Enable horizontal scrolling */
+            white-space: nowrap; /* Prevent cell content from wrapping */
             width: 100%; /* Ensure table takes full width */
             border-collapse: collapse;
+            font-size: 0.85em; /* Smaller font for table content */
           }
 
-          table thead, table tbody, table th, table td, table tr {
-            display: block; /* Make table elements block-level for stacking */
+          table thead th, table tbody td {
+            padding: 6px; /* Reduce padding in table cells */
           }
 
-          table thead tr {
-            position: absolute;
-            top: -9999px;
-            left: -9999px; /* Hide table headers visually but keep for screen readers */
-          }
-
-          table tr {
-            border: 1px solid #ccc;
-            margin-bottom: 15px;
-            width: 100%; /* Ensure row takes full width */
-          }
-
-          table td {
-            border: none; /* Remove individual cell borders */
-            border-bottom: 1px solid #eee; /* Add bottom border for separation */
-            position: relative;
-            padding-left: 50% !important; /* Make room for the pseudo-element label */
-            text-align: right !important; /* Align content to the right */
-            white-space: normal; /* Allow text to wrap within cells if needed */
-          }
-
-          table td:before {
-            content: attr(data-label); /* Use data-label for content */
-            position: absolute;
-            left: 6px;
-            width: 45%;
-            padding-right: 10px;
-            white-space: nowrap;
-            text-align: left;
-            font-weight: bold;
-          }
-
-          /* Specific adjustments for meal/activity rows in table */
-          table tr.meal-header-row td:first-child {
-              padding-left: 10px !important; /* Restore padding for meal/activity title */
-              text-align: left !important;
-          }
-
-          /* Hide actions column labels on mobile, will be inferred by buttons */
-          table td[data-label="Ενέργειες"] {
-              padding-left: 10px !important; /* Adjust padding for button column */
-              text-align: left !important;
-          }
-          table td[data-label="Ενέργειες"]:before {
-              content: ''; /* Hide pseudo-element for action column */
-          }
-
-          /* Adjust styling for input fields in mobile tables */
+          /* Ensure inputs within tables also adjust */
           table input[type="text"],
           table input[type="number"],
           table select {
-            width: calc(100% - 12px) !important; /* Make inputs fill available space */
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            padding: 3px; /* Smaller padding for inputs */
+            font-size: 0.85em; /* Smaller font for inputs */
           }
 
           /* Autocomplete styling for mobile */
           ul[style*="position: absolute"] {
-            width: calc(100% - 2px) !important; /* Ensure autocomplete dropdown matches input width */
-            left: 0;
-            right: 0;
-            margin: auto;
+            width: 100%; /* Ensure autocomplete dropdown matches input width */
             box-sizing: border-box;
+            font-size: 0.85em;
+          }
+
+          /* Buttons in tables */
+          table button {
+            padding: 4px 8px; /* Smaller padding for buttons */
+            font-size: 0.8em; /* Smaller font for buttons */
+          }
+
+          /* Ensure action buttons are always visible on one line if possible */
+          table td[data-label="Ενέργειες"] {
+              /* Keep as is for horizontal scroll, no specific mobile label hiding needed */
+              white-space: nowrap; /* Ensure buttons stay on one line */
           }
         }
+
+        /* Additional adjustments for very small screens (e.g., less than 480px) */
+        @media (max-width: 480px) {
+            .daily-targets-container > div {
+                flex: 1 1 45%; /* Allow two items per row */
+            }
+            .user-info-grid {
+                grid-template-columns: 1fr; /* Stack columns on very small screens */
+            }
+        }
+
         `}
       </style>
 
@@ -1128,7 +1128,7 @@ export default function App() {
       <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
         <h2 style={{ marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Πληροφορίες Χρήστη & Στόχος</h2>
 
-        <div className="user-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+        <div className="user-info-grid"> {/* Apply the grid class */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>📏 Ύψος (σε μέτρα): </label>
                 <input
@@ -1245,7 +1245,7 @@ export default function App() {
               borderRadius: '5px',
               cursor: 'pointer',
               fontSize: '1em',
-              display: 'inline-block' // Ensures it acts like a button
+              display: 'inline-block'
             }}
           >
             Εισαγωγή Δεδομένων
@@ -1253,7 +1253,7 @@ export default function App() {
               type="file"
               accept=".json"
               onChange={importData}
-              style={{ display: 'none' }} // Hide the actual file input
+              style={{ display: 'none' }}
             />
           </label>
         </div>
@@ -1421,7 +1421,7 @@ export default function App() {
                                     background: 'white',
                                     maxHeight: '150px',
                                     overflowY: 'auto',
-                                    width: '100%' // Ensure it fills the parent width
+                                    width: '100%'
                                   }}>
                                     {filteredFoodOptions[day][entryIdx][0].map(food => (
                                       <li
@@ -1577,7 +1577,7 @@ export default function App() {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px', flexWrap: 'wrap' }}>
                 <select
                     onChange={(e) => addMeal(day, e.target.value)}
-                    value="" // Reset after selection
+                    value=""
                     style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                 >
                     <option value="" disabled>Προσθήκη Γεύματος...</option>
