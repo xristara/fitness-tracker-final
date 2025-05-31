@@ -270,6 +270,29 @@ function calculateMealMacros(ingredients) {
   };
 }
 
+// ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
+function getComparisonColor(currentValue, previousValue, isWeight = true) {
+  if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue) || previousValue === 0) {
+    return 'black'; // Εάν δεν υπάρχουν τιμές, μένει μαύρο
+  }
+
+  // Για το βάρος και BMI, πράσινο σημαίνει μείωση, κόκκινο αύξηση
+  if (isWeight) {
+    if (currentValue < previousValue) {
+      return 'green'; // Έχει πέσει
+    } else if (currentValue > previousValue) {
+      return 'red'; // Έχει ανέβει
+    }
+  } else { // Για BMI, η λογική είναι ίδια με το βάρος
+    if (currentValue < previousValue) {
+        return 'green'; // Έχει πέσει
+    } else if (currentValue > previousValue) {
+        return 'red'; // Έχει ανέβει
+    }
+  }
+  return 'black'; // Δεν έχει αλλάξει
+}
+
 // ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΘΕΡΜΙΔΩΝ (BMR + TDEE + ΣΤΟΧΟΣ)
 function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, goal) {
   if (!weight || !heightCm || !age || !gender || !activityLevel || !goal) return null;
@@ -350,29 +373,6 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
   return Math.round(Math.max(0, caloriesFromCarbs / 4)); // Στρογγυλοποίηση στην κοντινότερη ακέραιη
 }
 
-// ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
-function getComparisonColor(currentValue, previousValue, isWeight = true) {
-  if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue) || previousValue === 0) {
-    return 'black'; // Εάν δεν υπάρχουν τιμές, μένει μαύρο
-  }
-
-  // Για το βάρος και BMI, πράσινο σημαίνει μείωση, κόκκινο αύξηση
-  if (isWeight) {
-    if (currentValue < previousValue) {
-      return 'green'; // Έχει πέσει
-    } else if (currentValue > previousValue) {
-      return 'red'; // Έχει ανέβει
-    }
-  } else { // Για BMI, η λογική είναι ίδια με το βάρος
-    if (currentValue < previousValue) {
-        return 'green'; // Έχει πέσει
-    } else if (currentValue > previousValue) {
-        return 'red'; // Έχει ανέβει
-    }
-  }
-  return 'black'; // Δεν έχει αλλάξει
-}
-
 
 export default function App() {
   // Functions to get initial state from localStorage or use defaults
@@ -436,8 +436,8 @@ export default function App() {
   const [autocompleteInput, setAutocompleteInput] = useState({}); // {day: {mealIdx: {ingredientIdx: 'current_input_text'}}}
   const [filteredFoodOptions, setFilteredFoodOptions] = useState({}); // {day: {mealIdx: {ingredientIdx: [filtered_options]}}}
   // Χρήση του useRef για να διαχειριστούμε το κλείσιμο του autocomplete όταν ο χρήστης κάνει κλικ έξω
-  const autocompleteRefs = useRef({});
-
+  // Αυτή η ref δομή θα περιέχει δυναμικά αναφορές σε κάθε πεδίο autocomplete
+  const autocompleteContainerRefs = useRef({});
 
   // ΤΡΟΠΟΠΟΙΗΜΕΝΗ ΣΥΝΑΡΤΗΣΗ: handleMealIngredientChange
   // Τώρα μπορεί να ενημερώσει foodId και quantity
@@ -468,7 +468,7 @@ export default function App() {
           }));
         }
       } else if (entry.type === 'activity') {
-          entry[field] = parseInt(value) || 0;
+          entry[field] = (field === 'burn' ? parseInt(value) || 0 : value); // Allow text for activity name
       }
       return updatedPlan;
     });
@@ -563,8 +563,14 @@ export default function App() {
         const newDay = { ...prev[day] };
         if (newDay[mealIdx]) {
             const newMeal = { ...newDay[mealIdx] };
-            delete newMeal[ingredientIdx];
-            newDay[mealIdx] = newMeal;
+            // Ενημέρωση των indexes μετά την αφαίρεση
+            const updatedMealIngredients = Object.keys(newMeal)
+                                            .filter(key => parseInt(key) !== ingredientIdx)
+                                            .reduce((acc, key, newIdx) => {
+                                                acc[newIdx] = newMeal[key];
+                                                return acc;
+                                            }, {});
+            newDay[mealIdx] = updatedMealIngredients;
         }
         return { ...prev, [day]: newDay };
     });
@@ -572,8 +578,13 @@ export default function App() {
         const newDay = { ...prev[day] };
         if (newDay[mealIdx]) {
             const newMeal = { ...newDay[mealIdx] };
-            delete newMeal[ingredientIdx];
-            newDay[mealIdx] = newMeal;
+            const updatedMealFiltered = Object.keys(newMeal)
+                                            .filter(key => parseInt(key) !== ingredientIdx)
+                                            .reduce((acc, key, newIdx) => {
+                                                acc[newIdx] = newMeal[key];
+                                                return acc;
+                                            }, {});
+            newDay[mealIdx] = updatedMealFiltered;
         }
         return { ...prev, [day]: newDay };
     });
@@ -617,13 +628,26 @@ export default function App() {
     // Καθαρισμός των autocomplete states αν αφαιρέθηκε γεύμα
     setAutocompleteInput(prev => {
       const newDay = { ...prev[day] };
-      delete newDay[entryIdx];
-      return { ...prev, [day]: newDay };
+      delete newDay[entryIdx]; // Αφαίρεση του entry
+      // Ενημέρωση των indexes μετά την αφαίρεση
+      const updatedDayEntries = Object.keys(newDay)
+                                .filter(key => parseInt(key) !== entryIdx)
+                                .reduce((acc, key, newIdx) => {
+                                    acc[newIdx] = newDay[key];
+                                    return acc;
+                                }, {});
+      return { ...prev, [day]: updatedDayEntries };
     });
     setFilteredFoodOptions(prev => {
       const newDay = { ...prev[day] };
       delete newDay[entryIdx];
-      return { ...prev, [day]: newDay };
+      const updatedDayEntries = Object.keys(newDay)
+                                .filter(key => parseInt(key) !== entryIdx)
+                                .reduce((acc, key, newIdx) => {
+                                    acc[newIdx] = newDay[key];
+                                    return acc;
+                                }, {});
+      return { ...prev, [day]: updatedDayEntries };
     });
   };
 
@@ -669,6 +693,7 @@ export default function App() {
         [year]: {
           ...prev[year],
           [month]: {
+            ...prev[year]?.[month], // Keep existing BMI if any
             weight: sundayWeight,
             bmi: calculateBMI(sundayWeight, height)
           }
@@ -731,7 +756,7 @@ export default function App() {
         const sortedMonths = Object.keys(history[year]).sort((a, b) => months.indexOf(a) - months.indexOf(b));
         for (let j = sortedMonths.length - 1; j >= 0; j--) {
           const month = sortedMonths[j];
-          if (history[year][month]?.weight) { // Check if weight exists and is not empty
+          if (history[year][month]?.weight && !isNaN(parseFloat(history[year][month].weight))) { // Check if weight exists and is not empty
             currentWeight = parseFloat(history[year][month].weight);
             break; // Βρέθηκε βάρος, διακοπή εσωτερικού βρόχου
           }
@@ -752,7 +777,7 @@ export default function App() {
 
     if (calculatedCalories) {
       const calculatedProtein = calculateDailyProtein(calculatedCalories, goal);
-      const calculatedFat = calculateDailyDailyFat(calculatedCalories, goal);
+      const calculatedFat = calculateDailyFat(calculatedCalories, goal); // Διόρθωση ονόματος συνάρτησης
       const calculatedCarbs = calculateDailyCarbs(calculatedCalories, calculatedProtein, calculatedFat);
 
       setDailyProteinTarget(calculatedProtein);
@@ -790,12 +815,12 @@ export default function App() {
   // useEffect για να κλείνει το autocomplete όταν κάνεις κλικ έξω
   useEffect(() => {
     function handleClickOutside(event) {
-      // Ελέγχουμε όλα τα refs για τα autocomplete components
-      for (const day in autocompleteRefs.current) {
-        for (const mealIdx in autocompleteRefs.current[day]) {
-          for (const ingredientIdx in autocompleteRefs.current[day][mealIdx]) {
-            if (autocompleteRefs.current[day][mealIdx][ingredientIdx] &&
-                !autocompleteRefs.current[day][mealIdx][ingredientIdx].contains(event.target)) {
+      // Ελέγχουμε όλες τις refs για τα autocomplete components
+      for (const day in autocompleteContainerRefs.current) {
+        for (const mealIdx in autocompleteContainerRefs.current[day]) {
+          for (const ingredientIdx in autocompleteContainerRefs.current[day][mealIdx]) {
+            if (autocompleteContainerRefs.current[day][mealIdx][ingredientIdx] &&
+                !autocompleteContainerRefs.current[day][mealIdx][ingredientIdx].contains(event.target)) {
               // Κλείσε το autocomplete αν το κλικ έγινε έξω από αυτό το συγκεκριμένο autocomplete
               setFilteredFoodOptions(prev => ({
                 ...prev,
@@ -1169,17 +1194,18 @@ export default function App() {
                                 const currentAutocompleteInput = autocompleteInput[day]?.[entryIdx]?.[ingredientIdx] || '';
                                 const currentFilteredOptions = filteredFoodOptions[day]?.[entryIdx]?.[ingredientIdx] || [];
 
-                                // Δημιουργία ref για κάθε πεδίο autocomplete
-                                if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
-                                if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
-                                autocompleteRefs.current[day][entryIdx][ingredientIdx] = useRef(null).current; // Ενημέρωση ref
+                                // Δυναμική ρύθμιση του ref για κάθε κοντέινερ autocomplete
+                                if (!autocompleteContainerRefs.current[day]) autocompleteContainerRefs.current[day] = {};
+                                if (!autocompleteContainerRefs.current[day][entryIdx]) autocompleteContainerRefs.current[day][entryIdx] = {};
 
                                 return (
-                                  <div key={ingredientIdx} style={{ marginBottom: '5px', position: 'relative' }} ref={el => {
-                                    if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
-                                    if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
-                                    autocompleteRefs.current[day][entryIdx][ingredientIdx] = el;
-                                  }}>
+                                  <div
+                                    key={ingredientIdx}
+                                    style={{ marginBottom: '5px', position: 'relative' }}
+                                    ref={el => {
+                                      autocompleteContainerRefs.current[day][entryIdx][ingredientIdx] = el;
+                                    }}
+                                  >
                                     <input
                                       type="text"
                                       value={currentAutocompleteInput}
