@@ -290,6 +290,39 @@ function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, go
   return Math.round(finalCalories);
 }
 
+// ΝΕΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΗΜΕΡΗΣΙΩΝ ΜΑΚΡΟΣΤΟΙΧΕΙΩΝ
+function calculateDailyProtein(dailyCalories, goal) {
+  let proteinPercentage;
+  if (goal === 'cut') {
+    proteinPercentage = 0.35; // Υψηλότερη πρωτεΐνη για γράμμωση
+  } else if (goal === 'bulk') {
+    proteinPercentage = 0.25; // Μέτρια προς υψηλή για όγκο
+  } else {
+    proteinPercentage = 0.20; // Κανονική για διατήρηση
+  }
+  return Math.round((dailyCalories * proteinPercentage) / 4); // 4 kcal ανά γραμμάριο πρωτεΐνης
+}
+
+function calculateDailyFat(dailyCalories, goal) {
+  let fatPercentage;
+  if (goal === 'cut') {
+    fatPercentage = 0.25; // Μέτριο λίπος για γράμμωση
+  } else if (goal === 'bulk') {
+    fatPercentage = 0.30; // Υψηλότερο λίπος για όγκο
+  } else {
+    fatPercentage = 0.25; // Κανονικό για διατήρηση
+  }
+  return Math.round((dailyCalories * fatPercentage) / 9); // 9 kcal ανά γραμμάριο λίπους
+}
+
+function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
+  // Υπολογίζουμε τους υδατάνθρακες από τις υπόλοιπες θερμίδες
+  const caloriesFromProtein = dailyProtein * 4;
+  const caloriesFromFat = dailyFat * 9;
+  const caloriesFromCarbs = dailyCalories - caloriesFromProtein - caloriesFromFat;
+  return Math.round(caloriesFromCarbs / 4); // 4 kcal ανά γραμμάριο υδατανθράκων
+}
+
 
 export default function App() {
   // Functions to get initial state from localStorage or use defaults
@@ -320,8 +353,11 @@ export default function App() {
     return { ...generated, ...storedHistory };
   });
 
-  // State για τις υπολογιζόμενες ημερήσιες θερμίδες
+  // State για τις υπολογιζόμενες ημερήσιες θερμίδες και μακροστοιχεία
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
+  const [dailyProteinTarget, setDailyProteinTarget] = useState(null);
+  const [dailyFatTarget, setDailyFatTarget] = useState(null);
+  const [dailyCarbsTarget, setDailyCarbsTarget] = useState(null);
 
 
   const handleMealIngredientChange = (day, mealIdx, ingredientIdx, field, value) => {
@@ -432,7 +468,7 @@ export default function App() {
     localStorage.setItem('weightHistory', JSON.stringify(history));
   }, [history]);
 
-  // useEffect για τον υπολογισμό των ημερήσιων θερμίδων όταν αλλάζουν τα σχετικά δεδομένα
+  // useEffect για τον υπολογισμό των ημερήσιων θερμίδων και μακροστοιχείων όταν αλλάζουν τα σχετικά δεδομένα
   useEffect(() => {
     // Εύρεση του πρώτου καταχωρημένου βάρους ή default τιμή
     let currentWeight = 70; // Default βάρος
@@ -459,6 +495,21 @@ export default function App() {
       goal
     );
     setDailyCalorieTarget(calculatedCalories);
+
+    if (calculatedCalories) {
+      const calculatedProtein = calculateDailyProtein(calculatedCalories, goal);
+      const calculatedFat = calculateDailyFat(calculatedCalories, goal);
+      const calculatedCarbs = calculateDailyCarbs(calculatedCalories, calculatedProtein, calculatedFat);
+      
+      setDailyProteinTarget(calculatedProtein);
+      setDailyFatTarget(calculatedFat);
+      setDailyCarbsTarget(calculatedCarbs);
+    } else {
+      setDailyProteinTarget(null);
+      setDailyFatTarget(null);
+      setDailyCarbsTarget(null);
+    }
+
   }, [weights, height, age, gender, activityLevel, goal, history]); // Added history to dependency array
 
 
@@ -506,7 +557,11 @@ export default function App() {
         </div>
         {dailyCalorieTarget && (
           <h3 style={{ marginTop: '15px' }}>
-            Συνιστώμενες Ημερήσιες Θερμίδες: <span style={{ color: '#007bff' }}>{dailyCalorieTarget} kcal</span>
+            Συνιστώμενες Ημερήσιες: 
+            <span style={{ color: '#007bff', marginLeft: '10px' }}>{dailyCalorieTarget} kcal</span>
+            <span style={{ color: '#28a745', marginLeft: '20px' }}>Πρωτεΐνη: {dailyProteinTarget} g</span>
+            <span style={{ color: '#ffc107', marginLeft: '20px' }}>Λίπος: {dailyFatTarget} g</span>
+            <span style={{ color: '#dc3545', marginLeft: '20px' }}>Υδατάνθρακες: {dailyCarbsTarget} g</span>
           </h3>
         )}
       </div>
