@@ -290,7 +290,7 @@ function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, go
   return Math.round(finalCalories);
 }
 
-// ΝΕΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΗΜΕΡΗΣΙΩΝ ΜΑΚΡΟΣΤΟΙΧΕΙΩΝ
+// ΣΥΝΑΡΤΗΣΕΙΣ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΗΜΕΡΗΣΙΩΝ ΜΑΚΡΟΣΤΟΙΧΕΙΩΝ
 function calculateDailyProtein(dailyCalories, goal) {
   let proteinPercentage;
   if (goal === 'cut') {
@@ -320,7 +320,9 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
   const caloriesFromProtein = dailyProtein * 4;
   const caloriesFromFat = dailyFat * 9;
   const caloriesFromCarbs = dailyCalories - caloriesFromProtein - caloriesFromFat;
-  return Math.round(caloriesFromCarbs / 4); // 4 kcal ανά γραμμάριο υδατανθράκων
+  // Προσοχή: Εάν οι θερμίδες υδατανθράκων βγουν αρνητικές (π.χ. λόγω πολύ υψηλής πρωτεΐνης/λίπους σε cut),
+  // τις θέτουμε στο 0.
+  return Math.round(Math.max(0, caloriesFromCarbs / 4)); // 4 kcal ανά γραμμάριο υδατανθράκων
 }
 
 
@@ -350,7 +352,15 @@ export default function App() {
     // Merge generated history with stored history to handle new years/months
     const generated = generateYearHistory();
     const storedHistory = getInitialState('weightHistory', {});
-    return { ...generated, ...storedHistory };
+    // This deep merge ensures that new months/years from generateYearHistory are added
+    // without overwriting existing data from storedHistory.
+    const mergedHistory = { ...generated };
+    for (const year in storedHistory) {
+      if (storedHistory.hasOwnProperty(year)) {
+        mergedHistory[year] = { ...mergedHistory[year], ...storedHistory[year] };
+      }
+    }
+    return mergedHistory;
   });
 
   // State για τις υπολογιζόμενες ημερήσιες θερμίδες και μακροστοιχεία
@@ -475,16 +485,21 @@ export default function App() {
     const firstDayWithWeight = Object.keys(weights).find(day => weights[day]);
     if (firstDayWithWeight) {
       currentWeight = parseFloat(weights[firstDayWithWeight]);
-    } else if (Object.keys(history).length > 0) { // If no current weights, try history
-      const lastYear = Object.keys(history).sort().pop();
-      if (lastYear) {
-        const lastMonth = Object.keys(history[lastYear]).sort((a,b) => months.indexOf(a) - months.indexOf(b)).pop();
-        if (lastMonth && history[lastYear][lastMonth].weight) {
-          currentWeight = parseFloat(history[lastYear][lastMonth].weight);
+    } else { // If no current weights, try history
+      const sortedYears = Object.keys(history).sort();
+      for (let i = sortedYears.length - 1; i >= 0; i--) {
+        const year = sortedYears[i];
+        const sortedMonths = Object.keys(history[year]).sort((a, b) => months.indexOf(a) - months.indexOf(b));
+        for (let j = sortedMonths.length - 1; j >= 0; j--) {
+          const month = sortedMonths[j];
+          if (history[year][month].weight) {
+            currentWeight = parseFloat(history[year][month].weight);
+            break;
+          }
         }
+        if (currentWeight !== 70) break; // If a weight is found, exit outer loop
       }
     }
-
 
     const calculatedCalories = calculateDailyCalories(
       currentWeight,
@@ -681,6 +696,19 @@ export default function App() {
                 <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
                   <td>{totalKcal}</td>
+                </tr>
+                {/* ΝΕΕΣ ΓΡΑΜΜΕΣ ΓΙΑ ΣΥΝΟΛΙΚΑ ΜΑΚΡΟΣΤΟΙΧΕΙΑ ΗΜΕΡΑΣ */}
+                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                  <td colSpan="5">Σύνολο Ημέρας (Πρωτεΐνη)</td>
+                  <td>{totalP.toFixed(1)} g</td>
+                </tr>
+                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                  <td colSpan="5">Σύνολο Ημέρας (Λιπαρά)</td>
+                  <td>{totalF.toFixed(1)} g</td>
+                </tr>
+                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                  <td colSpan="5">Σύνολο Ημέρας (Υδατάνθρακες)</td>
+                  <td>{totalC.toFixed(1)} g</td>
                 </tr>
                 {burn > 0 && (
                   <>
