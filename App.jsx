@@ -43,7 +43,7 @@ const foodDatabase = {
 
   // Γαλακτοκομικά
   'greekYogurt2pct': { name: 'Γιαούρτι Στραγγιστό 2%', protein: 10, fat: 2, carbs: 4, unit: 'g' },
-  'milkSemiSkimmed': { name: 'Γάλα Ημιάπαχο', protein: 3.3, fat: 1.8, carbs: 4.8, unit: 'ml' }, // Εδώ οι τιμές είναι ανά 100ml
+  'milkSemiSkimmed': { name: 'Γάλα Ημιάπαχο', protein: 3.3, fat: 1.8, carbs: 4.8, unit: 'ml' },
   'cheeseCheddar': { name: 'Τυρί Cheddar', protein: 25, fat: 33, carbs: 1.3, unit: 'g' }, // Γενικό τυρί
 
   // Λαχανικά
@@ -59,7 +59,7 @@ const foodDatabase = {
   // Φρούτα
   'banana': { name: 'Μπανάνα', protein: 1.1, fat: 0.3, carbs: 23, unit: 'g' },
   'apple': { name: 'Μήλο', protein: 0.3, fat: 0.2, carbs: 14, unit: 'g' },
-  'orangeJuice': { name: 'Χυμός Πορτοκαλιού', protein: 0.7, fat: 0.2, carbs: 11.8, unit: 'ml' }, // Εδώ οι τιμές είναι ανά 100ml
+  'orangeJuice': { name: 'Χυμός Πορτοκαλιού', protein: 0.7, fat: 0.2, carbs: 11.8, unit: 'ml' },
   'seasonalFruits': { name: 'Φρούτα Εποχής', protein: 0.5, fat: 0.2, carbs: 15, unit: 'g' }, // Γενική τιμή
 
   // Ξηροί καρποί, Σπόροι, Βούτυρα
@@ -123,7 +123,7 @@ const initialPlan = {
   Wednesday: [
     { meal: 'Πρωινό', type: 'meal', ingredients: [
         { foodId: 'oats', quantity: 50 },
-        { foodId: 'milkSemiSkimmed', quantity: 200 } // 200ml γάλα
+        { foodId: 'milkSemiSkimmed', quantity: 200 }
     ]},
     { meal: 'Σνακ 1', type: 'meal', ingredients: [
         { foodId: 'Weetabix Original', quantity: 20 },
@@ -205,7 +205,7 @@ const initialPlan = {
         { foodId: 'oats', quantity: 50 }, // Για pancakes βρώμης
         { foodId: 'egg', quantity: 1 } // Για pancakes
     ]},
-    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'orangeJuice', quantity: 200 }] }, // 200ml χυμός
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'orangeJuice', quantity: 200 }] },
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
         { foodId: 'mixedVegetables', quantity: 250 }, // Για λαδερό
         { foodId: 'fetaCheese', quantity: 50 }
@@ -251,13 +251,9 @@ function calculateMealMacros(ingredients) {
       // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g/100ml
       let multiplier;
       if (foodInfo.unit === 'τεμάχιο') {
-        // If unit is 'τεμάχιο', quantity is the number of items.
-        // Nutritional values in foodDatabase are per item.
-        multiplier = item.quantity;
-      } else {
-        // For 'g' and 'ml', values in foodDatabase are typically per 100g or 100ml.
-        // So, divide the quantity by 100 to get the correct multiplier.
-        multiplier = item.quantity / 100;
+        multiplier = item.quantity; // If unit is 'τεμάχιο', quantity is the number of items
+      } else { // For 'g' and 'ml', values are typically per 100g/100ml
+        multiplier = item.quantity / 100; // <-- Αυτό είναι το σωστό για 'ml' και 'g'
       }
 
       protein += foodInfo.protein * multiplier;
@@ -765,6 +761,7 @@ export default function App() {
     } else {
       setDailyProteinTarget(null);
       setDailyFatTarget(null);
+      setDailyCarbsTarget(null);
     }
 
   }, [weights.Sunday, height, age, gender, activityLevel, goal, history]);
@@ -988,147 +985,12 @@ export default function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Global Styles for responsiveness */}
-      <style>
-        {`
-        /* Default styles for larger screens */
-        .daily-targets-container {
-          display: flex;
-          justify-content: space-around;
-          flex-wrap: wrap; /* Allow items to wrap to next line if needed */
-          gap: 15px; /* Space between items */
-        }
-        .daily-targets-container > div {
-          flex: 1 1 22%; /* Approx 4 items per row, adjust as needed */
-          min-width: 150px; /* Minimum width for each target box */
-          padding: 15px;
-          background: #e0f2f7;
-          border-radius: 8px;
-          text-align: center;
-          box-shadow: 0 1px 5px rgba(0,0,0,0.08);
-        }
-        .daily-targets-container h3 {
-          margin-top: 0;
-          color: #2196f3;
-          font-size: 1em;
-        }
-        .daily-targets-container p {
-          font-size: 1.2em;
-          font-weight: bold;
-          color: #333;
-          margin-bottom: 0;
-        }
-
-        /* User Info Grid */
-        .user-info-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 20px;
-        }
-
-        /* Styles for mobile devices (screens up to 768px) */
-        @media (max-width: 768px) {
-          body {
-            font-size: 14px; /* Slightly smaller base font size */
-          }
-
-          h1 {
-            font-size: 1.8em;
-          }
-
-          h2 {
-            font-size: 1.5em;
-          }
-
-          h3 {
-            font-size: 1.2em;
-          }
-
-          /* Keep daily targets horizontal but allow wrapping and reduce padding/font */
-          .daily-targets-container {
-            flex-wrap: wrap; /* Already set, but good to re-confirm */
-            justify-content: center; /* Center items if they don't fill the row */
-            gap: 10px; /* Reduce gap */
-          }
-          .daily-targets-container > div {
-            min-width: 120px; /* Allow smaller width */
-            padding: 10px; /* Reduce padding */
-            flex: 1 1 30%; /* Allow 3 items per row if possible */
-          }
-          .daily-targets-container h3 {
-            font-size: 0.8em; /* Smaller font for titles */
-          }
-          .daily-targets-container p {
-            font-size: 1em; /* Smaller font for values */
-          }
-
-          /* User info grid - allow wrapping to fewer columns but not strictly one */
-          .user-info-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Allow elements to shrink more or wrap to 1 column if extremely small */
-            gap: 15px; /* Slightly reduced gap */
-          }
-
-          /* Tables - make them scrollable horizontally */
-          table {
-            display: block;
-            overflow-x: auto; /* Enable horizontal scrolling */
-            white-space: nowrap; /* Prevent cell content from wrapping */
-            width: 100%; /* Ensure table takes full width */
-            border-collapse: collapse;
-            font-size: 0.85em; /* Smaller font for table content */
-          }
-
-          table thead th, table tbody td {
-            padding: 6px; /* Reduce padding in table cells */
-          }
-
-          /* Ensure inputs within tables also adjust */
-          table input[type="text"],
-          table input[type="number"],
-          table select {
-            padding: 3px; /* Smaller padding for inputs */
-            font-size: 0.85em; /* Smaller font for inputs */
-          }
-
-          /* Autocomplete styling for mobile */
-          ul[style*="position: absolute"] {
-            width: 100%; /* Ensure autocomplete dropdown matches input width */
-            box-sizing: border-box;
-            font-size: 0.85em;
-          }
-
-          /* Buttons in tables */
-          table button {
-            padding: 4px 8px; /* Smaller padding for buttons */
-            font-size: 0.8em; /* Smaller font for buttons */
-          }
-
-          /* Ensure action buttons are always visible on one line if possible */
-          table td[data-label="Ενέργειες"] {
-              /* Keep as is for horizontal scroll, no specific mobile label hiding needed */
-              white-space: nowrap; /* Ensure buttons stay on one line */
-          }
-        }
-
-        /* Additional adjustments for very small screens (e.g., less than 480px) */
-        @media (max-width: 480px) {
-            .daily-targets-container > div {
-                flex: 1 1 45%; /* Allow two items per row */
-            }
-            .user-info-grid {
-                grid-template-columns: 1fr; /* Stack columns on very small screens */
-            }
-        }
-
-        `}
-      </style>
-
       <h1 style={{ textAlign: 'center', color: '#333' }}>📊 Εβδομαδιαίο Πλάνο Διατροφής & Βάρους</h1>
 
       <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
         <h2 style={{ marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Πληροφορίες Χρήστη & Στόχος</h2>
 
-        <div className="user-info-grid"> {/* Apply the grid class */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>📏 Ύψος (σε μέτρα): </label>
                 <input
@@ -1196,163 +1058,30 @@ export default function App() {
             textAlign: 'center',
             boxShadow: '0 1px 5px rgba(0,0,0,0.1)'
           }}>
-            <h3 style={{ color: '#2e7d32', marginBottom: '10px' }}>Συνιστώμενοι Ημερήσιοι Στόχοι:</h3>
-            <div className="daily-targets-container"> {/* Apply the flexbox styles here */}
-              <div>
-                <h3>Θερμίδες</h3>
-                <p>{dailyCalorieTarget} kcal</p>
-              </div>
-              <div>
-                <h3>Πρωτεΐνη</h3>
-                <p>{dailyProteinTarget} g</p>
-              </div>
-              <div>
-                <h3>Λίπος</h3>
-                <p>{dailyFatTarget} g</p>
-              </div>
-              <div>
-                <h3>Υδατάνθρακες</h3>
-                <p>{dailyCarbsTarget} g</p>
-              </div>
+            <h3 style={{ margin: '0 0 10px 0', color: '#388e3c' }}>Συνιστώμενοι Ημερήσιοι Στόχοι:</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '15px' }}>
+                <div style={{ flex: '1 1 150px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #c8e6c9' }}>
+                    <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Θερμίδες</p>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#4caf50' }}>{dailyCalorieTarget} kcal</p>
+                </div>
+                <div style={{ flex: '1 1 150px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #b3e5fc' }}>
+                    <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Πρωτεΐνη</p>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#03a9f4' }}>{dailyProteinTarget} g</p>
+                </div>
+                <div style={{ flex: '1 1 150px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffecb3' }}>
+                    <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Λίπος</p>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#ffc107' }}>{dailyFatTarget} g</p>
+                </div>
+                <div style={{ flex: '1 1 150px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffcdd2' }}>
+                    <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Υδατάνθρακες</p>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#f44336' }}>{dailyCarbsTarget} g</p>
+                </div>
             </div>
           </div>
         )}
       </div>
 
-      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Διαχείριση Δεδομένων</h2>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button
-            onClick={exportData}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '1em'
-            }}
-          >
-            Εξαγωγή Δεδομένων
-          </button>
-          <label
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '1em',
-              display: 'inline-block'
-            }}
-          >
-            Εισαγωγή Δεδομένων
-            <input
-              type="file"
-              accept=".json"
-              onChange={importData}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>📊 Ιστορικό Βάρους & BMI</h2>
-
-        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-            <label style={{ fontWeight: 'bold' }}>Επιλογή Έτους: </label>
-            <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            >
-                {Object.keys(history).sort((a, b) => b - a).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                ))}
-            </select>
-        </div>
-
-        <div style={{ height: '400px', marginBottom: '30px' }}>
-          <Line data={chartData} options={chartOptions} />
-        </div>
-
-        <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#555' }}>Καταχώρηση Βάρους & BMI ανά Μήνα (για το {selectedYear})</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-          <thead>
-            <tr>
-              <th style={{ background: '#f2f2f2', padding: '8px', border: '1px solid #ccc', textAlign: 'left' }}>Μήνας</th>
-              <th style={{ background: '#f2f2f2', padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>Βάρος (kg)</th>
-              <th style={{ background: '#f2f2f2', padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>BMI</th>
-            </tr>
-          </thead>
-          <tbody>
-            {months.map(month => {
-              const currentWeight = history[selectedYear]?.[month]?.weight;
-              const currentBMI = history[selectedYear]?.[month]?.bmi;
-
-              // Εύρεση προηγούμενης τιμής για σύγκριση
-              let previousWeight = null;
-              let previousBMI = null;
-
-              // Βρες τον προηγούμενο μήνα
-              const currentMonthIndex = months.indexOf(month);
-              if (currentMonthIndex > 0) {
-                const prevMonth = months[currentMonthIndex - 1];
-                previousWeight = history[selectedYear]?.[prevMonth]?.weight;
-                previousBMI = history[selectedYear]?.[prevMonth]?.bmi;
-              } else {
-                // Αν είναι ο πρώτος μήνας του επιλεγμένου έτους, κοίτα τον τελευταίο μήνα του προηγούμενου έτους
-                const prevYear = parseInt(selectedYear) - 1;
-                if (history[prevYear]) {
-                  const lastMonthOfPrevYear = months[months.length - 1];
-                  previousWeight = history[prevYear]?.[lastMonthOfPrevYear]?.weight;
-                  previousBMI = history[prevYear]?.[lastMonthOfPrevYear]?.bmi;
-                }
-              }
-
-              const weightColor = getComparisonColor(currentWeight, previousWeight, true);
-              const bmiColor = getComparisonColor(currentBMI, previousBMI, false);
-
-              return (
-                <tr key={month}>
-                  <td data-label="Μήνας" style={{ padding: '8px', border: '1px solid #ccc' }}>{month}</td>
-                  <td data-label="Βάρος (kg)" style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={currentWeight || ''}
-                      onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
-                      style={{ width: '80px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px', color: weightColor }}
-                    />
-                  </td>
-                  <td data-label="BMI" style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
-                    {currentBMI || ''}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-
-      <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '30px' }}>Εβδομαδιαίο Πλάνο Διατροφής</h2>
-
-      {daysOfWeek.map((day, dayIndex) => {
-        const greekDay = {
-          Monday: 'Δευτέρα',
-          Tuesday: 'Τρίτη',
-          Wednesday: 'Τετάρτη',
-          Thursday: 'Πέμπτη',
-          Friday: 'Παρασκευή',
-          Saturday: 'Σάββατο',
-          Sunday: 'Κυριακή'
-        }[day];
-
-        const entriesForDay = plan[day] || [];
+      {Object.entries(plan).map(([day, entriesForDay], dayIndex) => {
         let totalP = 0, totalF = 0, totalC = 0, burn = 0;
 
         entriesForDay.forEach(entry => {
@@ -1366,215 +1095,220 @@ export default function App() {
           }
         });
 
+        // Στρογγυλοποίηση των συνολικών για την ημέρα
         const totalKcal = kcal(totalP, totalF, totalC);
         const netKcal = totalKcal - burn;
+        const bmi = calculateBMI(weights.Sunday, height);
+
 
         return (
-          <div key={day} style={{ marginBottom: '40px', padding: '25px', borderRadius: '10px', background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ color: '#2196F3', marginBottom: '20px', borderBottom: '2px solid #2196F3', paddingBottom: '10px' }}>🗓️ {greekDay}</h3>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+          <div key={day} style={{ marginBottom: '40px', background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+            <h2 style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>{day}</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Γεύμα/Δραστηριότητα</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Συστατικό/Περιγραφή</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Ποσότητα</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Πρωτεΐνη (g)</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Λίπος (g)</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Υδατ. (g)</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Θερμίδες (kcal)</th>
-                  <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Ενέργειες</th>
+                <tr style={{ background: '#eee' }}>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Γεύμα / Δραστηριότητα</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Τροφή / Συστατικό</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Ποσότητα</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Πρωτεΐνη (g)</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Λίπος (g)</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Υδατ. (g)</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Θερμίδες (kcal)</th>
+                  <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
                 {entriesForDay.map((entry, entryIdx) => (
-                  <React.Fragment key={entryIdx}>
-                    {entry.type === 'meal' ? (
-                      <>
-                        <tr className="meal-header-row" style={{ background: '#e3f2fd' }}>
-                          <td data-label="Γεύμα/Δραστηριότητα" style={{ padding: '10px', border: '1px solid #ccc', fontWeight: 'bold' }} rowSpan={entry.ingredients.length + 1}>
+                  entry.type === 'meal' ? (
+                    <>
+                      <tr key={`${day}-${entryIdx}-meal-header`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
+                        <td rowSpan={entry.ingredients.length + 1} style={{ padding: '10px', border: '1px solid #ccc', verticalAlign: 'top' }}>
                             {entry.meal}
-                          </td>
-                          {/* Render the first ingredient in the same row as meal name */}
-                          {entry.ingredients[0] ? (
-                            <>
-                              <td data-label="Συστατικό/Περιγραφή" style={{ padding: '6px', border: '1px solid #ccc', position: 'relative' }} ref={el => {
-                                if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
-                                if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
-                                autocompleteRefs.current[day][entryIdx][0] = el;
-                              }}>
-                                <input
-                                  type="text"
-                                  value={autocompleteInput[day]?.[entryIdx]?.[0] || ''}
-                                  onChange={(e) => handleAutocompleteInputChange(day, entryIdx, 0, e.target.value)}
-                                  placeholder="Αναζήτηση τροφής..."
-                                  style={{ width: 'calc(100% - 10px)', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
-                                />
-                                {filteredFoodOptions[day]?.[entryIdx]?.[0]?.length > 0 && (
-                                  <ul style={{
-                                    position: 'absolute',
-                                    zIndex: 100,
-                                    listStyleType: 'none',
-                                    padding: '0',
-                                    margin: '0',
-                                    border: '1px solid #ccc',
-                                    background: 'white',
-                                    maxHeight: '150px',
-                                    overflowY: 'auto',
-                                    width: '100%'
-                                  }}>
-                                    {filteredFoodOptions[day][entryIdx][0].map(food => (
-                                      <li
-                                        key={food.id}
-                                        onClick={() => handleFoodSelect(day, entryIdx, 0, food.id)}
-                                        style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
-                                      >
-                                        {food.name} ({food.unit === 'g' || food.unit === 'ml' ? `ανά 100${food.unit}` : `ανά ${food.unit}`})
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </td>
-                              <td data-label="Ποσότητα" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={entry.ingredients[0].quantity}
-                                  onChange={e => handleMealIngredientChange(day, entryIdx, 0, 'quantity', e.target.value)}
-                                  style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
-                                /> {foodDatabase[entry.ingredients[0].foodId]?.unit || ''}
-                              </td>
-                              <td data-label="Πρωτεΐνη (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{calculateMealMacros([entry.ingredients[0]]).protein}</td>
-                              <td data-label="Λίπος (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{calculateMealMacros([entry.ingredients[0]]).fat}</td>
-                              <td data-label="Υδατ. (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{calculateMealMacros([entry.ingredients[0]]).carbs}</td>
-                              <td data-label="Θερμίδες (kcal)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{kcal(calculateMealMacros([entry.ingredients[0]]).protein, calculateMealMacros([entry.ingredients[0]]).fat, calculateMealMacros([entry.ingredients[0]]).carbs)}</td>
-                              <td data-label="Ενέργειες" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <button onClick={() => removeIngredient(day, entryIdx, 0)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }}>-</button>
-                                <button onClick={() => addIngredient(day, entryIdx)} style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>+</button>
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td data-label="Συστατικό/Περιγραφή" colSpan="6" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <button onClick={() => addIngredient(day, entryIdx)} style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Προσθήκη Συστατικού</button>
-                              </td>
-                              <td data-label="Ενέργειες" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <button onClick={() => removeEntry(day, entryIdx)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Διαγραφή Γεύματος</button>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                        {/* Render remaining ingredients */}
-                        {entry.ingredients.slice(1).map((ingredient, ingredientIdxOffset) => {
-                          const actualIngredientIdx = ingredientIdxOffset + 1;
-                          const macros = calculateMealMacros([ingredient]);
-                          return (
-                            <tr key={actualIngredientIdx}>
-                              <td data-label="Συστατικό/Περιγραφή" style={{ padding: '6px', border: '1px solid #ccc', position: 'relative' }} ref={el => {
-                                if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
-                                if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
-                                autocompleteRefs.current[day][entryIdx][actualIngredientIdx] = el;
-                              }}>
-                                <input
-                                  type="text"
-                                  value={autocompleteInput[day]?.[entryIdx]?.[actualIngredientIdx] || ''}
-                                  onChange={(e) => handleAutocompleteInputChange(day, entryIdx, actualIngredientIdx, e.target.value)}
-                                  placeholder="Αναζήτηση τροφής..."
-                                  style={{ width: 'calc(100% - 10px)', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
-                                />
-                                {filteredFoodOptions[day]?.[entryIdx]?.[actualIngredientIdx]?.length > 0 && (
-                                  <ul style={{
-                                    position: 'absolute',
-                                    zIndex: 100,
-                                    listStyleType: 'none',
-                                    padding: '0',
-                                    margin: '0',
-                                    border: '1px solid #ccc',
-                                    background: 'white',
-                                    maxHeight: '150px',
-                                    overflowY: 'auto',
-                                    width: '100%'
-                                  }}>
-                                    {filteredFoodOptions[day][entryIdx][actualIngredientIdx].map(food => (
-                                      <li
-                                        key={food.id}
-                                        onClick={() => handleFoodSelect(day, entryIdx, actualIngredientIdx, food.id)}
-                                        style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
-                                      >
-                                        {food.name} ({food.unit === 'g' || food.unit === 'ml' ? `ανά 100${food.unit}` : `ανά ${food.unit}`})
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </td>
-                              <td data-label="Ποσότητα" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={ingredient.quantity}
-                                  onChange={e => handleMealIngredientChange(day, entryIdx, actualIngredientIdx, 'quantity', e.target.value)}
-                                  style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px' }}
-                                /> {foodDatabase[ingredient.foodId]?.unit || ''}
-                              </td>
-                              <td data-label="Πρωτεΐνη (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{macros.protein}</td>
-                              <td data-label="Λίπος (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{macros.fat}</td>
-                              <td data-label="Υδατ. (g)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{macros.carbs}</td>
-                              <td data-label="Θερμίδες (kcal)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{kcal(macros.protein, macros.fat, macros.carbs)}</td>
-                              <td data-label="Ενέργειες" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                                <button onClick={() => removeIngredient(day, entryIdx, actualIngredientIdx)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }}>-</button>
-                                <button onClick={() => addIngredient(day, entryIdx)} style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>+</button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </>
-                    ) : (
-                      <tr style={{ background: '#e8f5e9' }}>
-                        <td data-label="Γεύμα/Δραστηριότητα" style={{ padding: '10px', border: '1px solid #ccc', fontWeight: 'bold' }}>Δραστηριότητα</td>
-                        <td data-label="Συστατικό/Περιγραφή" style={{ padding: '6px', border: '1px solid #ccc' }}>
-                          <input
-                            type="text"
-                            value={entry.activity}
-                            onChange={e => handleMealIngredientChange(day, entryIdx, null, 'activity', e.target.value)}
-                            style={{ width: 'calc(100% - 10px)', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
-                          />
+                            <br/>
+                            <button
+                              onClick={() => removeEntry(day, entryIdx)}
+                              style={{ background: '#dc3545', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', marginTop: '5px' }}
+                            >
+                              Αφαίρεση Γεύματος
+                            </button>
                         </td>
-                        <td data-label="Ποσότητα" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }} colSpan="4">
-                          Θερμίδες:
-                          <input
-                            type="number"
-                            step="1"
-                            value={entry.burn}
-                            onChange={e => handleMealIngredientChange(day, entryIdx, null, 'burn', e.target.value)}
-                            style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px', marginLeft: '5px' }}
-                          /> kcal
-                        </td>
-                        <td data-label="Θερμίδες (kcal)" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>{entry.burn}</td>
-                        <td data-label="Ενέργειες" style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                          <button onClick={() => removeEntry(day, entryIdx)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Διαγραφή</button>
+                        <td colSpan="7" style={{ border: 'none' }}></td>
+                      </tr>
+                      {entry.ingredients.map((ingredient, ingredientIdx) => {
+                        const foodInfo = foodDatabase[ingredient.foodId];
+                        if (!foodInfo && ingredient.foodId !== '') {
+                          console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
+                        }
+
+                        const multiplier = (foodInfo?.unit === 'τεμάχιο' || foodInfo?.unit === 'ml')
+                          ? ingredient.quantity
+                          : ingredient.quantity / 100;
+
+                        const p = parseFloat(((foodInfo?.protein || 0) * multiplier).toFixed(1));
+                        const f = parseFloat(((foodInfo?.fat || 0) * multiplier).toFixed(1));
+                        const c = parseFloat(((foodInfo?.carbs || 0) * multiplier).toFixed(1));
+                        const itemKcal = kcal(p, f, c); // Χρησιμοποιεί την τροποποιημένη kcal
+
+                        if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
+                        if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
+                        if (!autocompleteRefs.current[day][entryIdx][ingredientIdx]) {
+                            autocompleteRefs.current[day][entryIdx][ingredientIdx] = React.createRef();
+                        }
+
+                        return (
+                          <tr key={`${day}-${entryIdx}-${ingredientIdx}`}>
+                            <td style={{ position: 'relative', padding: '8px', border: '1px solid #eee' }}>
+                                <input
+                                    type="text"
+                                    value={autocompleteInput[day]?.[entryIdx]?.[ingredientIdx] || ''}
+                                    onChange={e => handleAutocompleteInputChange(day, entryIdx, ingredientIdx, e.target.value)}
+                                    onFocus={e => handleAutocompleteInputChange(day, entryIdx, ingredientIdx, e.target.value)}
+                                    placeholder="Αναζήτηση τροφής..."
+                                    style={{ width: '150px', padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                />
+                                {filteredFoodOptions[day]?.[entryIdx]?.[ingredientIdx]?.length > 0 && (
+                                    <ul
+                                        ref={autocompleteRefs.current[day][entryIdx][ingredientIdx]}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            zIndex: 100,
+                                            listStyle: 'none',
+                                            margin: 0,
+                                            padding: 0,
+                                            border: '1px solid #ccc',
+                                            backgroundColor: 'white',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            width: 'calc(100% + 2px)', // +2px for border
+                                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                        }}
+                                    >
+                                        {filteredFoodOptions[day][entryIdx][ingredientIdx].map(food => (
+                                            <li
+                                                key={food.id}
+                                                onClick={() => handleFoodSelect(day, entryIdx, ingredientIdx, food.id)}
+                                                style={{
+                                                    padding: '8px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #eee'
+                                                }}
+                                                onMouseEnter={e => e.target.style.backgroundColor = '#f0f0f0'}
+                                                onMouseLeave={e => e.target.style.backgroundColor = 'white'}
+                                            >
+                                                {food.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={ingredient.quantity || ''}
+                                onChange={e => handleMealIngredientChange(day, entryIdx, ingredientIdx, 'quantity', e.target.value)}
+                                style={{ width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                              /> {foodInfo?.unit || ''}
+                            </td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>{p}</td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>{f}</td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>{c}</td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>{itemKcal}</td>
+                            <td style={{ padding: '8px', border: '1px solid #eee' }}>
+                              <button onClick={() => removeIngredient(day, entryIdx, ingredientIdx)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>
+                                Αφαίρεση
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {/* Σύνολα για το κάθε γεύμα */}
+                      <tr style={{ background: '#f0f0f0', fontWeight: 'bold' }}>
+                        <td colSpan="2" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Σύνολο Γεύματος</td>
+                        <td style={{ padding: '10px', border: '1px solid #ccc' }}>{calculateMealMacros(entry.ingredients).protein}</td>
+                        <td style={{ padding: '10px', border: '1px solid #ccc' }}>{calculateMealMacros(entry.ingredients).fat}</td>
+                        <td style={{ padding: '10px', border: '1px solid #ccc' }}>{calculateMealMacros(entry.ingredients).carbs}</td>
+                        <td style={{ padding: '10px', border: '1px solid #ccc' }}>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
+                        <td style={{ padding: '10px', border: '1px solid #ccc' }}>
+                          <button onClick={() => addIngredient(day, entryIdx)} style={{ background: '#28a745', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>
+                            Προσθήκη Συστατικού
+                          </button>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
+                    </>
+                  ) : (
+                    // Για δραστηριότητες
+                    <tr key={`${day}-${entryIdx}`} style={{ background: '#f0f8ff' }}>
+                      <td style={{ padding: '10px', border: '1px solid #ccc', fontWeight: 'bold' }}>
+                        <input
+                          type="text"
+                          value={entry.activity || ''}
+                          onChange={e => handleMealIngredientChange(day, entryIdx, null, 'activity', e.target.value)}
+                          placeholder="Περιγραφή Δραστηριότητας"
+                          style={{ width: '150px', padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                        <br/>
+                        <button
+                          onClick={() => removeEntry(day, entryIdx)}
+                          style={{ background: '#dc3545', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', marginTop: '5px' }}
+                        >
+                          Αφαίρεση Δραστηριότητας
+                        </button>
+                      </td>
+                      <td colSpan="4" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'right' }}>Θερμίδες Καύσης:</td>
+                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>
+                        <input
+                          type="number"
+                          value={entry.burn || ''}
+                          onChange={e => handleMealIngredientChange(day, entryIdx, null, 'burn', e.target.value)}
+                          style={{ width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </td>
+                      <td colSpan="2" style={{ border: '1px solid #ccc' }}></td>
+                    </tr>
+                  )
                 ))}
+                {/* Συνολικά για την ημέρα */}
                 <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td data-label="Σύνολο Ημέρας (Θερμίδες):" colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Θερμίδες):</td>
-                  <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', border: '1px solid #ccc' }}>{totalKcal} kcal</td>
-                  <td data-label="Ενέργειες" colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Θερμίδες):</td> {/* Αλλαγή εδώ */}
+                  <td style={{ padding: '10px', border: '1px solid #ccc' }}>{totalKcal} kcal</td>
+                  <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
-                <tr style={{ background: '#c8e6c9', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td data-label="Θερμίδες από Δραστηριότητα:" colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Θερμίδες από Δραστηριότητα:</td>
-                  <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', border: '1px solid #ccc' }}>{burn} kcal</td>
-                  <td data-label="Ενέργειες" colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                {/* ΝΕΕΣ ΓΡΑΜΜΕΣ ΓΙΑ ΣΥΝΟΛΙΚΑ ΜΑΚΡΟΣΤΟΙΧΕΙΑ ΗΜΕΡΑΣ */}
+                <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Πρωτεΐνη):</td> {/* Αλλαγή εδώ */}
+                  <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalP)} g</td>
+                  <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
-                <tr style={{ background: '#ffecb3', fontWeight: 'bold', fontSize: '1.1em' }}>
-                  <td data-label="Καθαρές Θερμίδες Ημέρας:" colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Καθαρές Θερμίδες Ημέρας:</td>
-                  <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', border: '1px solid #ccc' }}>{netKcal} kcal</td>
-                  <td data-label="Ενέργειες" colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Λιπαρά):</td> {/* Αλλαγή εδώ */}
+                  <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalF)} g</td>
+                  <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
                 </tr>
+                <tr style={{ background: '#d0e0ff', fontWeight: 'bold', fontSize: '1.1em' }}>
+                  <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Ημέρας (Υδατάνθρακες):</td> {/* Αλλαγή εδώ */}
+                  <td style={{ padding: '10px', border: '1px solid #ccc' }}>{Math.round(totalC)} g</td>
+                  <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                </tr>
+                {burn > 0 && (
+                  <>
+                    <tr style={{ color: 'green', background: '#e6ffe6' }}>
+                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Κατανάλωση θερμίδων από Δραστηριότητες:</td> {/* Αλλαγή εδώ */}
+                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>-{burn} kcal</td>
+                      <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                    </tr>
+                    <tr style={{ background: '#ccffcc', fontWeight: 'bold', fontSize: '1.1em' }}>
+                      <td colSpan="6" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Καθαρό θερμιδικό ισοζύγιο:</td> {/* Αλλαγή εδώ */}
+                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{netKcal} kcal</td>
+                      <td colSpan="1" style={{ border: '1px solid #ccc' }}></td>
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                 <select
                     onChange={(e) => addMeal(day, e.target.value)}
                     value=""
@@ -1586,55 +1320,179 @@ export default function App() {
                     <option value="Μεσημεριανό">Μεσημεριανό</option>
                     <option value="Σνακ 2">Σνακ 2</option>
                     <option value="Βραδινό">Βραδινό</option>
-                    <option value="Άλλο Γεύμα">Άλλο Γεύμα</option>
                 </select>
-                <button onClick={() => addActivity(day)} style={{ background: '#607d8b', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}>Προσθήκη Δραστηριότητας</button>
+                <button
+                    onClick={() => addActivity(day)}
+                    style={{ background: '#6c757d', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                    Προσθήκη Δραστηριότητας
+                </button>
             </div>
+
+
+            {day === 'Sunday' && (
+              <div style={{ marginTop: '20px', padding: '15px', background: '#e8f5e9', borderRadius: '6px', boxShadow: '0 1px 5px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <label style={{ fontWeight: 'bold', color: '#666' }}>Βάρος σώματος (kg): </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={weights.Sunday || ''}
+                  onChange={e => handleSundayWeightChange(e.target.value)}
+                  style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', width: '100px' }}
+                />
+                {bmi && (
+                  <span style={{ marginLeft: '10px', fontSize: '1.1em', color: '#388e3c' }}>BMI: <strong>{bmi}</strong></span>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
 
-      <div style={{ marginTop: '40px', padding: '25px', borderRadius: '10px', background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <h3 style={{ color: '#2196F3', marginBottom: '20px', borderBottom: '2px solid #2196F3', paddingBottom: '10px' }}>Εβδομαδιαία Σύνοψη</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Μακροστοιχείο</th>
-              <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Ποσότητα (g)</th>
-              <th style={{ background: '#f2f2f2', padding: '10px', border: '1px solid #ccc', textAlign: 'center' }}>Θερμίδες (kcal)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td data-label="Μακροστοιχείο" style={{ padding: '10px', border: '1px solid #ccc' }}>Πρωτεΐνη</td>
-              <td data-label="Ποσότητα (g)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.protein.toFixed(1)}</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{Math.round(weeklySummary.protein * 4)}</td>
-            </tr>
-            <tr>
-              <td data-label="Μακροστοιχείο" style={{ padding: '10px', border: '1px solid #ccc' }}>Λίπος</td>
-              <td data-label="Ποσότητα (g)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.fat.toFixed(1)}</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{Math.round(weeklySummary.fat * 9)}</td>
-            </tr>
-            <tr>
-              <td data-label="Μακροστοιχείο" style={{ padding: '10px', border: '1px solid #ccc' }}>Υδατάνθρακες</td>
-              <td data-label="Ποσότητα (g)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.carbs.toFixed(1)}</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{Math.round(weeklySummary.carbs * 4)}</td>
-            </tr>
-            <tr style={{ background: '#e0f7fa', fontWeight: 'bold' }}>
-              <td data-label="Σύνολο Θερμίδων από Φαγητό:" colSpan="2" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Θερμίδων από Φαγητό:</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.calories} kcal</td>
-            </tr>
-            <tr style={{ background: '#ffe0b2', fontWeight: 'bold' }}>
-              <td data-label="Σύνολο Θερμίδων που κάηκαν (δραστηριότητες):" colSpan="2" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Σύνολο Θερμίδων που κάηκαν (δραστηριότητες):</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.burnedCalories} kcal</td>
-            </tr>
-            <tr style={{ background: '#c8e6c9', fontWeight: 'bold' }}>
-              <td data-label="Καθαρές Θερμίδες Εβδομάδας:" colSpan="2" style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Καθαρές Θερμίδες Εβδομάδας:</td>
-              <td data-label="Θερμίδες (kcal)" style={{ padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{weeklySummary.calories - weeklySummary.burnedCalories} kcal</td>
-            </tr>
-          </tbody>
-        </table>
+      <h2 style={{ marginTop: '40px', color: '#333', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>📅 Ιστορικό Βάρους & BMI</h2>
+      <div style={{ marginBottom: '20px', padding: '20px', borderRadius: '8px', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontWeight: 'bold', color: '#666' }}>Επιλέξτε Έτος:</label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+          >
+            {Object.keys(history).sort((a, b) => b - a).map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Ο πίνακας τώρα θα εμφανίζει μόνο τους μήνες του επιλεγμένου έτους */}
+        <div style={{ marginBottom: '20px', overflowX: 'auto' }}> {/* Προστέθηκε πάλι overflowX:auto αν η οθόνη είναι πολύ μικρή για όλους τους μήνες */}
+          <table style={{ minWidth: '900px', width: '100%', borderCollapse: 'collapse' }}> {/* Ορίστηκε ένα minWidth για να μη συμπιέζεται υπερβολικά */}
+            <thead>
+              <tr>
+                {/* Η στήλη "Έτος" αφαιρείται από εδώ, καθώς το έτος επιλέγεται από το dropdown */}
+                {months.map(month => (
+                  <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
+                ))}
+              </tr>
+              <tr>
+                {months.map(month => (
+                  <React.Fragment key={`${month}-sub`}>
+                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
+                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
+                  </React.Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Εμφανίζουμε μόνο τη σειρά για το επιλεγμένο έτος */}
+              <tr>
+                {months.map((month, monthIndex) => {
+                  // Παίρνουμε τα δεδομένα για το επιλεγμένο έτος και τον τρέχοντα μήνα
+                  const values = history[selectedYear]?.[month] || { weight: '', bmi: '' };
+
+                  // Logic to find previous month's data for comparison within the selected year
+                  let prevWeight = null;
+                  let prevBMI = null;
+
+                  if (monthIndex > 0) {
+                    const prevMonth = months[monthIndex - 1];
+                    prevWeight = history[selectedYear]?.[prevMonth]?.weight;
+                    prevBMI = history[selectedYear]?.[prevMonth]?.bmi;
+                  } else if (selectedYear > Object.keys(history).sort()[0]) { // If it's January and not the first year
+                    // Compare with December of the previous year
+                    const prevYear = parseInt(selectedYear) - 1;
+                    prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
+                    prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
+                  }
+
+
+                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight), true);
+                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI), false);
+
+                  return (
+                    <React.Fragment key={`${selectedYear}-${month}-data`}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={values.weight || ''}
+                          onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
+                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px', color: weightColor }}
+                        />
+                      </td>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
+                        {values.bmi || ''}
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', height: '400px' }}>
+        <h3 style={{ marginBottom: '15px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Γράφημα Ιστορικού</h3>
+        <Line data={chartData} options={chartOptions} />
+      </div>
+
+      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#e0f7fa', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ marginBottom: '20px', color: '#00796b', borderBottom: '1px solid #b2ebf2', paddingBottom: '10px' }}>Σύνοψη Εβδομάδας</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '15px', textAlign: 'center' }}>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #80deea' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Θερμίδες Κατανάλωσης:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#0097a7' }}>{Math.round(weeklySummary.calories)} kcal</p>
+          </div>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #c8e6c9' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολική Πρωτεΐνη:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#4caf50' }}>{Math.round(weeklySummary.protein)} g</p>
+          </div>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffecb3' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικό Λίπος:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#ffc107' }}>{Math.round(weeklySummary.fat)} g</p>
+          </div>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffcdd2' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικοί Υδατάνθρακες:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#f44336' }}>{Math.round(weeklySummary.carbs)} g</p>
+          </div>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #b3e5fc' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Καύσεις:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#03a9f4' }}>{Math.round(weeklySummary.burnedCalories)} kcal</p>
+          </div>
+          <div style={{ flex: '1 1 180px', padding: '10px', background: '#e1f5fe', borderRadius: '5px', border: '1px solid #29b6f6' }}>
+            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Καθαρό Εβδομαδιαίο Ισοζύγιο:</p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#0288d1' }}>{Math.round(weeklySummary.calories - weeklySummary.burnedCalories)} kcal</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '40px', textAlign: 'center', padding: '20px', background: '#f0f0f0', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ marginBottom: '20px', color: '#555' }}>Διαχείριση Δεδομένων</h2>
+        <button
+          onClick={exportData}
+          style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em', marginRight: '15px' }}
+        >
+          Εξαγωγή Δεδομένων (JSON)
+        </button>
+        <label
+          htmlFor="import-file"
+          style={{ background: '#2196F3', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em', display: 'inline-block' }}
+        >
+          Εισαγωγή Δεδομένων (JSON)
+          <input
+            type="file"
+            id="import-file"
+            accept=".json"
+            onChange={importData}
+            style={{ display: 'none' }}
+          />
+        </label>
+        <p style={{ marginTop: '15px', fontSize: '0.9em', color: '#777' }}>
+          Χρησιμοποιήστε την εισαγωγή/εξαγωγή για backup ή μεταφορά των δεδομένων σας.
+        </p>
+      </div>
+
     </div>
   );
 }
