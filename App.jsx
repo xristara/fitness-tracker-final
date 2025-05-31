@@ -43,7 +43,7 @@ const foodDatabase = {
 
   // Γαλακτοκομικά
   'greekYogurt2pct': { name: 'Γιαούρτι Στραγγιστό 2%', protein: 10, fat: 2, carbs: 4, unit: 'g' },
-  'milkSemiSkimmed': { name: 'Γάλα Ημιάπαχο', protein: 3.3, fat: 1.8, carbs: 4.8, unit: 'ml' }, // Εδώ οι τιμές είναι ανά 100ml
+  'milkSemiSkimmed': { name: 'Γάλα Ημιάπαχο', protein: 3.3, fat: 1.8, carbs: 4.8, unit: 'ml' },
   'cheeseCheddar': { name: 'Τυρί Cheddar', protein: 25, fat: 33, carbs: 1.3, unit: 'g' }, // Γενικό τυρί
 
   // Λαχανικά
@@ -59,7 +59,7 @@ const foodDatabase = {
   // Φρούτα
   'banana': { name: 'Μπανάνα', protein: 1.1, fat: 0.3, carbs: 23, unit: 'g' },
   'apple': { name: 'Μήλο', protein: 0.3, fat: 0.2, carbs: 14, unit: 'g' },
-  'orangeJuice': { name: 'Χυμός Πορτοκαλιού', protein: 0.7, fat: 0.2, carbs: 11.8, unit: 'ml' }, // Εδώ οι τιμές είναι ανά 100ml
+  'orangeJuice': { name: 'Χυμός Πορτοκαλιού', protein: 0.7, fat: 0.2, carbs: 11.8, unit: 'ml' },
   'seasonalFruits': { name: 'Φρούτα Εποχής', protein: 0.5, fat: 0.2, carbs: 15, unit: 'g' }, // Γενική τιμή
 
   // Ξηροί καρποί, Σπόροι, Βούτυρα
@@ -123,7 +123,7 @@ const initialPlan = {
   Wednesday: [
     { meal: 'Πρωινό', type: 'meal', ingredients: [
         { foodId: 'oats', quantity: 50 },
-        { foodId: 'milkSemiSkimmed', quantity: 200 } // 200ml γάλα
+        { foodId: 'milkSemiSkimmed', quantity: 200 }
     ]},
     { meal: 'Σνακ 1', type: 'meal', ingredients: [
         { foodId: 'Weetabix Original', quantity: 20 },
@@ -205,7 +205,7 @@ const initialPlan = {
         { foodId: 'oats', quantity: 50 }, // Για pancakes βρώμης
         { foodId: 'egg', quantity: 1 } // Για pancakes
     ]},
-    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'orangeJuice', quantity: 200 }] }, // 200ml χυμός
+    { meal: 'Σνακ 1', type: 'meal', ingredients: [{ foodId: 'orangeJuice', quantity: 200 }] },
     { meal: 'Μεσημεριανό', type: 'meal', ingredients: [
         { foodId: 'mixedVegetables', quantity: 250 }, // Για λαδερό
         { foodId: 'fetaCheese', quantity: 50 }
@@ -248,17 +248,12 @@ function calculateMealMacros(ingredients) {
   ingredients.forEach(item => {
     const foodInfo = foodDatabase[item.foodId];
     if (foodInfo) {
-      // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g/100ml
-      let multiplier;
-      if (foodInfo.unit === 'τεμάχιο') {
-        // If unit is 'τεμάχιο', quantity is the number of items.
-        // Nutritional values in foodDatabase are per item.
-        multiplier = item.quantity;
-      } else {
-        // For 'g' and 'ml', values in foodDatabase are typically per 100g or 100ml.
-        // So, divide the quantity by 100 to get the correct multiplier.
-        multiplier = item.quantity / 100;
-      }
+      // Υπολογισμός με βάση την ποσότητα και τις τιμές ανά μονάδα/100g
+      // Αν η μονάδα είναι 'τεμάχιο' ή 'ml', ο πολλαπλασιαστής είναι 1 (η ποσότητα είναι ο αριθμός τεμαχίων/ml)
+      // Αλλιώς, η ποσότητα είναι σε γραμμάρια, οπότε διαιρούμε με 100
+      const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
+        ? item.quantity
+        : item.quantity / 100;
 
       protein += foodInfo.protein * multiplier;
       fat += foodInfo.fat * multiplier;
@@ -1144,20 +1139,14 @@ export default function App() {
                           console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
                         }
 
-                        // Re-calculate p, f, c, and itemKcal based on the corrected calculateMealMacros logic
-                        let p = 0, f = 0, c = 0;
-                        if (foodInfo) {
-                            let multiplier;
-                            if (foodInfo.unit === 'τεμάχιο') {
-                                multiplier = ingredient.quantity;
-                            } else {
-                                multiplier = ingredient.quantity / 100;
-                            }
-                            p = parseFloat((foodInfo.protein * multiplier).toFixed(1));
-                            f = parseFloat((foodInfo.fat * multiplier).toFixed(1));
-                            c = parseFloat((foodInfo.carbs * multiplier).toFixed(1));
-                        }
-                        const itemKcal = kcal(p, f, c);
+                        const multiplier = (foodInfo?.unit === 'τεμάχιο' || foodInfo?.unit === 'ml')
+                          ? ingredient.quantity
+                          : ingredient.quantity / 100;
+
+                        const p = parseFloat(((foodInfo?.protein || 0) * multiplier).toFixed(1));
+                        const f = parseFloat(((foodInfo?.fat || 0) * multiplier).toFixed(1));
+                        const c = parseFloat(((foodInfo?.carbs || 0) * multiplier).toFixed(1));
+                        const itemKcal = kcal(p, f, c); // Χρησιμοποιεί την τροποποιημένη kcal
 
                         if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
                         if (!autocompleteRefs.current[day][entryIdx]) autocompleteRefs.current[day][entryIdx] = {};
