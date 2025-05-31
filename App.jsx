@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Προσθέστε useRef
 
 const months = [
   'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
@@ -10,7 +10,7 @@ const months = [
 const foodDatabase = {
   // Δημητριακά, Ψωμί, Ζυμαρικά, Ρύζι
   'oats': { name: 'Βρώμη', protein: 13, fat: 5, carbs: 66, unit: 'g' },
-  'Weetabix Original': { name: 'δημητριακά ολικής άλεσης', protein: 12, fat: 2, carbs: 69, unit: 'g' },
+  'Weetabix Original': { name: 'δημημητριακά ολικής άλεσης', protein: 12, fat: 2, carbs: 69, unit: 'g' },
   'breadWholeWheat': { name: 'Ψωμί Ολικής', protein: 13, fat: 3, carbs: 45, unit: 'g' },
   'riceCooked': { name: 'Ρύζι Μαγειρεμένο', protein: 2.7, fat: 0.3, carbs: 28, unit: 'g' }, // μαγειρεμένο ρύζι
   'mashedPotatoes': { name: 'Πουρές Πατάτας', protein: 2, fat: 5, carbs: 15, unit: 'g' }, // σπιτικός, με λίγο βούτυρο/γάλα
@@ -58,6 +58,13 @@ const foodDatabase = {
   'honey': { name: 'Μέλι', protein: 0.3, fat: 0, carbs: 82, unit: 'g' },
   'PureisolatAM': { name: 'WHEY', protein: 90, fat: 1.7, carbs: 4, unit: 'g' }, 
 };
+
+// **ΝΕΑ ΠΡΟΣΘΗΚΗ:** Μετατροπή του foodDatabase σε ένα array για εύκολο mapping σε dropdowns
+const foodOptions = Object.keys(foodDatabase).map(foodId => ({
+    id: foodId,
+    name: foodDatabase[foodId].name,
+    unit: foodDatabase[foodId].unit // Περιλαμβάνουμε και τη μονάδα για εμφάνιση
+}));
 
 
 const initialPlan = {
@@ -326,8 +333,7 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
 }
 
 // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
-// comparisonType: 'weight' (μείωση -> πράσινο) ή 'bmi' (μείωση -> πράσινο)
-function getComparisonColor(currentValue, previousValue, comparisonType) {
+function getComparisonColor(currentValue, previousValue) {
   if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue)) {
     return 'black'; // Εάν δεν υπάρχουν τιμές, μένει μαύρο
   }
@@ -385,7 +391,15 @@ export default function App() {
   const [dailyFatTarget, setDailyFatTarget] = useState(null);
   const [dailyCarbsTarget, setDailyCarbsTarget] = useState(null);
 
+  // **ΝΕΑ STATES για Autocomplete:**
+  const [autocompleteInput, setAutocompleteInput] = useState({}); // {day: {mealIdx: {ingredientIdx: 'current_input_text'}}}
+  const [filteredFoodOptions, setFilteredFoodOptions] = useState({}); // {day: {mealIdx: {ingredientIdx: [filtered_options]}}}
+  // Χρήση του useRef για να διαχειριστούμε το κλείσιμο του autocomplete όταν ο χρήστης κάνει κλικ έξω
+  const autocompleteRefs = useRef({});
 
+
+  // ΤΡΟΠΟΠΟΙΗΜΕΝΗ ΣΥΝΑΡΤΗΣΗ: handleMealIngredientChange
+  // Τώρα μπορεί να ενημερώσει foodId και quantity
   const handleMealIngredientChange = (day, mealIdx, ingredientIdx, field, value) => {
     setPlan(prevPlan => {
       const updatedPlan = { ...prevPlan };
@@ -395,9 +409,23 @@ export default function App() {
         const updatedIngredients = [...entry.ingredients];
         updatedIngredients[ingredientIdx] = {
           ...updatedIngredients[ingredientIdx],
-          [field]: parseFloat(value) || 0 // Ποσότητα μπορεί να είναι δεκαδική
+          [field]: (field === 'foodId' ? value : parseFloat(value) || 0)
         };
         entry.ingredients = updatedIngredients;
+        // Ενημέρωση του input value για το autocomplete όταν αλλάζει το foodId
+        if (field === 'foodId') {
+          const foodName = foodDatabase[value]?.name || '';
+          setAutocompleteInput(prev => ({
+            ...prev,
+            [day]: {
+              ...(prev[day] || {}),
+              [mealIdx]: {
+                ...(prev[day]?.[mealIdx] || {}),
+                [ingredientIdx]: foodName
+              }
+            }
+          }));
+        }
       } else if (entry.type === 'activity') {
           entry[field] = parseInt(value) || 0;
       }
@@ -405,7 +433,112 @@ export default function App() {
     });
   };
 
-  // Η συνάρτηση αυτή θα χρησιμοποιείται μόνο για το βάρος της Κυριακής
+  // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Χειρισμός αλλαγής στο input του autocomplete
+  const handleAutocompleteInputChange = (day, mealIdx, ingredientIdx, value) => {
+    setAutocompleteInput(prev => ({
+      ...prev,
+      [day]: {
+        ...(prev[day] || {}),
+        [mealIdx]: {
+          ...(prev[day]?.[mealIdx] || {}),
+          [ingredientIdx]: value
+        }
+      }
+    }));
+
+    // Φιλτράρισμα των επιλογών
+    const lowerCaseValue = value.toLowerCase();
+    const filtered = foodOptions.filter(food =>
+      food.name.toLowerCase().includes(lowerCaseValue)
+    ).slice(0, 10); // Περιορισμός σε 10 αποτελέσματα
+
+    setFilteredFoodOptions(prev => ({
+      ...prev,
+      [day]: {
+        ...(prev[day] || {}),
+        [mealIdx]: {
+          ...(prev[day]?.[mealIdx] || {}),
+          [ingredientIdx]: filtered
+        }
+      }
+    }));
+  };
+
+  // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Επιλογή τροφής από το autocomplete
+  const handleFoodSelect = (day, mealIdx, ingredientIdx, foodId) => {
+    handleMealIngredientChange(day, mealIdx, ingredientIdx, 'foodId', foodId);
+    // Κρύψιμο των προτάσεων
+    setFilteredFoodOptions(prev => ({
+      ...prev,
+      [day]: {
+        ...(prev[day] || {}),
+        [mealIdx]: {
+          ...(prev[day]?.[mealIdx] || {}),
+          [ingredientIdx]: [] // Άδειασμα των προτάσεων
+        }
+      }
+    }));
+  };
+
+  // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Προσθήκη νέου συστατικού σε γεύμα
+  const addIngredient = (day, mealIdx) => {
+    setPlan(prevPlan => {
+      const updatedPlan = { ...prevPlan };
+      const entry = updatedPlan[day][mealIdx];
+      if (entry.type === 'meal') {
+        // Προσθήκη ενός κενού (ή προεπιλεγμένου) συστατικού
+        entry.ingredients = [...entry.ingredients, { foodId: '', quantity: 0 }]; 
+      }
+      return updatedPlan;
+    });
+    // Επίσης, πρέπει να ενημερώσουμε το autocompleteInput state για το νέο συστατικό
+    setAutocompleteInput(prev => {
+        const newIngredientIndex = plan[day][mealIdx].ingredients.length; // Το index του νέου συστατικού
+        return {
+            ...prev,
+            [day]: {
+                ...(prev[day] || {}),
+                [mealIdx]: {
+                    ...(prev[day]?.[mealIdx] || {}),
+                    [newIngredientIndex]: '' // Άδειο αρχικά
+                }
+            }
+        };
+    });
+  };
+
+  // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Αφαίρεση συστατικού από γεύμα
+  const removeIngredient = (day, mealIdx, ingredientIdx) => {
+    setPlan(prevPlan => {
+      const updatedPlan = { ...prevPlan };
+      const entry = updatedPlan[day][mealIdx];
+      if (entry.type === 'meal') {
+        entry.ingredients = entry.ingredients.filter((_, i) => i !== ingredientIdx);
+      }
+      return updatedPlan;
+    });
+    // Καθαρισμός των autocomplete states για το αφαιρεθέν συστατικό
+    setAutocompleteInput(prev => {
+        const newDay = { ...prev[day] };
+        if (newDay[mealIdx]) {
+            const newMeal = { ...newDay[mealIdx] };
+            delete newMeal[ingredientIdx];
+            newDay[mealIdx] = newMeal;
+        }
+        return { ...prev, [day]: newDay };
+    });
+    setFilteredFoodOptions(prev => {
+        const newDay = { ...prev[day] };
+        if (newDay[mealIdx]) {
+            const newMeal = { ...newDay[mealIdx] };
+            delete newMeal[ingredientIdx];
+            newDay[mealIdx] = newMeal;
+        }
+        return { ...prev, [day]: newDay };
+    });
+  };
+
+
   const handleSundayWeightChange = (value) => {
     setWeights(prevWeights => ({ ...prevWeights, Sunday: value }));
   };
@@ -538,8 +671,60 @@ export default function App() {
       setDailyCarbsTarget(null);
     }
 
-  }, [weights.Sunday, height, age, gender, activityLevel, goal, history]); // Added history to dependency array
+  }, [weights.Sunday, height, age, gender, activityLevel, goal, history]);
 
+  // useEffect για να αρχικοποιήσει τα autocomplete inputs όταν φορτώνει το πλάνο
+  // (Προσοχή: αυτό μπορεί να γίνει ένα bottleneck αν το πλάνο είναι τεράστιο,
+  // αλλά για λογικά μεγέθη είναι εντάξει)
+  useEffect(() => {
+    const initialAutocompleteValues = {};
+    for (const day in plan) {
+      if (plan.hasOwnProperty(day)) {
+        initialAutocompleteValues[day] = {};
+        plan[day].forEach((meal, mealIdx) => {
+          if (meal.type === 'meal') {
+            initialAutocompleteValues[day][mealIdx] = {};
+            meal.ingredients.forEach((ingredient, ingredientIdx) => {
+              initialAutocompleteValues[day][mealIdx][ingredientIdx] = foodDatabase[ingredient.foodId]?.name || '';
+            });
+          }
+        });
+      }
+    }
+    setAutocompleteInput(initialAutocompleteValues);
+  }, [plan]); // Εξαρτάται από το plan για την αρχική φόρτωση
+
+  // useEffect για να κλείνει το autocomplete όταν κάνεις κλικ έξω
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Ελέγχουμε όλα τα refs για τα autocomplete components
+      for (const day in autocompleteRefs.current) {
+        for (const mealIdx in autocompleteRefs.current[day]) {
+          for (const ingredientIdx in autocompleteRefs.current[day][mealIdx]) {
+            if (autocompleteRefs.current[day][mealIdx][ingredientIdx] && 
+                !autocompleteRefs.current[day][mealIdx][ingredientIdx].contains(event.target)) {
+              // Κλείσε το autocomplete αν το κλικ έγινε έξω από αυτό το συγκεκριμένο autocomplete
+              setFilteredFoodOptions(prev => ({
+                ...prev,
+                [day]: {
+                  ...(prev[day] || {}),
+                  [mealIdx]: {
+                    ...(prev[day]?.[mealIdx] || {}),
+                    [ingredientIdx]: []
+                  }
+                }
+              }));
+            }
+          }
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []); // Τρέχει μόνο μία φορά κατά το mount
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
@@ -627,6 +812,7 @@ export default function App() {
                   <th>Λίπος (g)</th>
                   <th>Υδατ. (g)</th>
                   <th>Θερμίδες (kcal)</th>
+                  <th>Ενέργειες</th> {/* Νέα στήλη για κουμπιά */}
                 </tr>
               </thead>
               <tbody>
@@ -634,37 +820,80 @@ export default function App() {
                   entry.type === 'meal' ? (
                     <>
                       <tr key={`${day}-${mealIdx}-title`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
-                        <td rowSpan={entry.ingredients.length + 1}>{entry.meal}</td> {/* Meal name */}
-                        <td colSpan="6"></td> {/* Empty cells for spacing */}
+                        <td rowSpan={entry.ingredients.length + 2}>{entry.meal}</td> {/* Meal name +2 για Add button */}
+                        <td colSpan="7"></td> {/* Empty cells for spacing */}
                       </tr>
                       {entry.ingredients.map((ingredient, ingredientIdx) => {
                         const foodInfo = foodDatabase[ingredient.foodId];
                         // Αν δεν βρεθεί η τροφή, δείχνουμε 0 και προειδοποίηση
-                        if (!foodInfo) {
+                        if (!foodInfo && ingredient.foodId !== '') { // Added check for empty foodId
                           console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
-                          return (
-                            <tr key={`${day}-${mealIdx}-${ingredientIdx}`} style={{ color: 'red' }}>
-                              <td>Άγνωστη Τροφή: {ingredient.foodId}</td>
-                              <td>{ingredient.quantity}</td>
-                              <td colSpan="4">Δεδομένα δεν βρέθηκαν</td>
-                              <td>0</td>
-                            </tr>
-                          );
                         }
 
-                        const multiplier = (foodInfo.unit === 'τεμάχιο' || foodInfo.unit === 'ml')
+                        const multiplier = (foodInfo?.unit === 'τεμάχιο' || foodInfo?.unit === 'ml')
                           ? ingredient.quantity
                           : ingredient.quantity / 100;
 
-                        const p = parseFloat((foodInfo.protein * multiplier).toFixed(1));
-                        const f = parseFloat((foodInfo.fat * multiplier).toFixed(1));
-                        const c = parseFloat((foodInfo.carbs * multiplier).toFixed(1));
+                        const p = parseFloat(((foodInfo?.protein || 0) * multiplier).toFixed(1));
+                        const f = parseFloat(((foodInfo?.fat || 0) * multiplier).toFixed(1));
+                        const c = parseFloat(((foodInfo?.carbs || 0) * multiplier).toFixed(1));
                         const itemKcal = kcal(p, f, c);
+
+                        // Δημιουργία αναφοράς για κάθε Autocomplete
+                        if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
+                        if (!autocompleteRefs.current[day][mealIdx]) autocompleteRefs.current[day][mealIdx] = {};
+                        if (!autocompleteRefs.current[day][mealIdx][ingredientIdx]) {
+                            autocompleteRefs.current[day][mealIdx][ingredientIdx] = React.createRef();
+                        }
 
                         return (
                           <tr key={`${day}-${mealIdx}-${ingredientIdx}`}>
-                            <td>
-                              {foodInfo.name} {/* Εμφανίζει το "όνομα" της τροφής */}
+                            <td style={{ position: 'relative' }}> {/* Γονικό div για το autocomplete */}
+                                {/* **ΝΕΑ ΑΛΛΑΓΗ:** Input για autocomplete */}
+                                <input
+                                    type="text"
+                                    value={autocompleteInput[day]?.[mealIdx]?.[ingredientIdx] || ''}
+                                    onChange={e => handleAutocompleteInputChange(day, mealIdx, ingredientIdx, e.target.value)}
+                                    onFocus={e => handleAutocompleteInputChange(day, mealIdx, ingredientIdx, e.target.value)} // Ξανα-φιλτράρει όταν αποκτά focus
+                                    placeholder="Αναζήτηση τροφής..."
+                                    style={{ width: '150px' }}
+                                />
+                                {/* Λίστα προτάσεων */}
+                                {filteredFoodOptions[day]?.[mealIdx]?.[ingredientIdx]?.length > 0 && (
+                                    <ul
+                                        ref={autocompleteRefs.current[day][mealIdx][ingredientIdx]} // Αναφορά για το κλικ έξω
+                                        style={{
+                                            position: 'absolute',
+                                            top: '100%', // Κάτω από το input
+                                            left: 0,
+                                            zIndex: 100, // Να εμφανίζεται πάνω από άλλα στοιχεία
+                                            listStyle: 'none',
+                                            margin: 0,
+                                            padding: 0,
+                                            border: '1px solid #ccc',
+                                            backgroundColor: 'white',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            width: '100%' // Ίδιο πλάτος με το input
+                                        }}
+                                    >
+                                        {filteredFoodOptions[day][mealIdx][ingredientIdx].map(food => (
+                                            <li
+                                                key={food.id}
+                                                onClick={() => handleFoodSelect(day, mealIdx, ingredientIdx, food.id)}
+                                                style={{
+                                                    padding: '8px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #eee'
+                                                }}
+                                                onMouseEnter={e => e.target.style.backgroundColor = '#f0f0f0'}
+                                                onMouseLeave={e => e.target.style.backgroundColor = 'white'}
+                                            >
+                                                {food.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </td>
                             <td>
                               <input
@@ -673,12 +902,17 @@ export default function App() {
                                 value={ingredient.quantity || ''}
                                 onChange={e => handleMealIngredientChange(day, mealIdx, ingredientIdx, 'quantity', e.target.value)}
                                 style={{ width: '80px' }}
-                              /> {foodInfo.unit}
+                              /> {foodInfo?.unit || ''} {/* Εμφανίζει τη μονάδα (με ασφαλή πρόσβαση) */}
                             </td>
                             <td>{p}</td>
                             <td>{f}</td>
                             <td>{c}</td>
                             <td>{itemKcal}</td>
+                            <td>
+                              <button onClick={() => removeIngredient(day, mealIdx, ingredientIdx)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                Αφαίρεση
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -689,6 +923,12 @@ export default function App() {
                         <td>{calculateMealMacros(entry.ingredients).fat}</td>
                         <td>{calculateMealMacros(entry.ingredients).carbs}</td>
                         <td>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
+                        <td>
+                          {/* **ΝΕΑ ΠΡΟΣΘΗΚΗ:** Κουμπί Προσθήκης Συστατικού */}
+                          <button onClick={() => addIngredient(day, mealIdx)} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                            Προσθήκη Συστατικού
+                          </button>
+                        </td>
                       </tr>
                     </>
                   ) : (
@@ -703,6 +943,7 @@ export default function App() {
                           style={{ width: '80px' }}
                         />
                       </td>
+                      <td colSpan="2"></td> {/* Κενές στήλες για τη δραστηριότητα */}
                     </tr>
                   )
                 ))}
@@ -710,29 +951,35 @@ export default function App() {
                 <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
                   <td>{totalKcal}</td>
+                  <td colSpan="2"></td>
                 </tr>
                 {/* ΝΕΕΣ ΓΡΑΜΜΕΣ ΓΙΑ ΣΥΝΟΛΙΚΑ ΜΑΚΡΟΣΤΟΙΧΕΙΑ ΗΜΕΡΑΣ */}
                 <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Πρωτεΐνη)</td>
                   <td>{totalP.toFixed(1)} g</td>
+                  <td colSpan="2"></td>
                 </tr>
                 <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Λιπαρά)</td>
                   <td>{totalF.toFixed(1)} g</td>
+                  <td colSpan="2"></td>
                 </tr>
                 <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Υδατάνθρακες)</td>
                   <td>{totalC.toFixed(1)} g</td>
+                  <td colSpan="2"></td>
                 </tr>
                 {burn > 0 && (
                   <>
                     <tr style={{ color: 'green' }}>
                       <td colSpan="5">Κατανάλωση θερμίδων</td>
                       <td>-{burn}</td>
+                      <td colSpan="2"></td>
                     </tr>
                     <tr style={{ background: '#e0ffe0', fontWeight: 'bold' }}>
                       <td colSpan="5">Καθαρό θερμιδικό ισοζύγιο</td>
                       <td>{netKcal}</td>
+                      <td colSpan="2"></td>
                     </tr>
                   </>
                 )}
@@ -798,8 +1045,8 @@ export default function App() {
                     prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
                   }
 
-                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight), 'weight');
-                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI), 'bmi');
+                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
+                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
                   
                   return (
                     <React.Fragment key={`${year}-${month}-data`}>
