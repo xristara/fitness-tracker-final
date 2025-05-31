@@ -350,19 +350,28 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
 }
 
 // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
-function getComparisonColor(currentValue, previousValue) {
-  if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue)) {
+function getComparisonColor(currentValue, previousValue, isWeight = true) {
+  if (currentValue === null || previousValue === null || isNaN(currentValue) || isNaN(previousValue) || previousValue === 0) {
     return 'black'; // Εάν δεν υπάρχουν τιμές, μένει μαύρο
   }
 
-  if (currentValue < previousValue) {
-    return 'green'; // Έχει πέσει
-  } else if (currentValue > previousValue) {
-    return 'red'; // Έχει ανέβει
-  } else {
-    return 'black'; // Δεν έχει αλλάξει
+  // Για το βάρος και BMI, πράσινο σημαίνει μείωση, κόκκινο αύξηση
+  if (isWeight) {
+    if (currentValue < previousValue) {
+      return 'green'; // Έχει πέσει
+    } else if (currentValue > previousValue) {
+      return 'red'; // Έχει ανέβει
+    }
+  } else { // Για BMI, η λογική είναι ίδια με το βάρος
+    if (currentValue < previousValue) {
+        return 'green'; // Έχει πέσει
+    } else if (currentValue > previousValue) {
+        return 'red'; // Έχει ανέβει
+    }
   }
+  return 'black'; // Δεν έχει αλλάξει
 }
+
 
 export default function App() {
   // Functions to get initial state from localStorage or use defaults
@@ -403,13 +412,18 @@ export default function App() {
   });
 
   // State για το επιλεγμένο έτος στο ιστορικό
-  const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(() => {
-    // Attempt to get the most recent year from history if available
-    const yearsInHistory = Object.keys(history).filter(year => Object.keys(history[year]).some(month => history[year][month].weight !== '' || history[year][month].bmi !== ''));
-    return yearsInHistory.length > 0 ? Math.max(...yearsInHistory.map(Number)) : currentYear;
+    const currentYear = new Date().getFullYear();
+    const storedYear = getInitialState('selectedHistoryYear', currentYear);
+    // Ensure the selected year exists in history, otherwise default to current or latest
+    const availableYears = Object.keys(history).map(Number).sort((a, b) => b - a);
+    if (availableYears.includes(storedYear)) {
+        return storedYear;
+    } else if (availableYears.length > 0) {
+        return availableYears[0]; // Use the latest year if stored not found
+    }
+    return currentYear; // Fallback
   });
-
 
   // State για τις υπολογιζόμενες ημερήσιες θερμίδες και μακροστοιχεία
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(null);
@@ -695,6 +709,10 @@ export default function App() {
     localStorage.setItem('weightHistory', JSON.stringify(history));
   }, [history]);
 
+  useEffect(() => {
+    localStorage.setItem('selectedHistoryYear', JSON.stringify(selectedYear));
+  }, [selectedYear]);
+
   // useEffect για τον υπολογισμό των ημερήσιων θερμίδων και μακροστοιχείων όταν αλλάζουν τα σχετικά δεδομένα
   useEffect(() => {
     // Εύρεση του βάρους από την Κυριακή ή από το ιστορικό
@@ -806,14 +824,20 @@ export default function App() {
   const weightData = [];
   const bmiData = [];
 
-  // Χρησιμοποιούμε μόνο τα δεδομένα του επιλεγμένου έτους
-  const dataForSelectedYear = history[selectedYear] || {};
+  // Συλλέγουμε δεδομένα μόνο για το επιλεγμένο έτος
+  const selectedYearData = history[selectedYear] || {};
   months.forEach(month => {
-    const data = dataForSelectedYear[month];
-    if (data && (data.weight || data.bmi)) { // Μόνο αν υπάρχει κάποιο δεδομένο
-      chartLabels.push(month); // Απλά ο μήνας ως label
+    const data = selectedYearData[month];
+    if (data && (data.weight || data.bmi)) {
+      chartLabels.push(`${month.substring(0, 3)}.`);
       weightData.push(data.weight ? parseFloat(data.weight) : null);
       bmiData.push(data.bmi ? parseFloat(data.bmi) : null);
+    } else {
+        // Προσθέτουμε κενά σημεία για μήνες χωρίς δεδομένα,
+        // ώστε να μην "κολλάνε" οι γραμμές του γραφήματος
+        chartLabels.push(`${month.substring(0, 3)}.`);
+        weightData.push(null);
+        bmiData.push(null);
     }
   });
 
@@ -849,7 +873,7 @@ export default function App() {
       },
       title: {
         display: true,
-        text: `Ιστορικό Βάρους και BMI για το ${selectedYear}`, // Ενημέρωση τίτλου
+        text: `Ιστορικό Βάρους και BMI για το ${selectedYear}`,
       },
     },
     scales: {
@@ -1333,17 +1357,18 @@ export default function App() {
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
             style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
           >
-            {/* Δημιουργία επιλογών για τα έτη που υπάρχουν στο ιστορικό */}
             {Object.keys(history).sort((a, b) => b - a).map(year => (
               <option key={year} value={year}>{year}</option>
             ))}
           </select>
         </div>
 
-        <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Αυτό το div επιτρέπει την οριζόντια κύλιση */}
-          <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
+        {/* Ο πίνακας τώρα θα εμφανίζει μόνο τους μήνες του επιλεγμένου έτους */}
+        <div style={{ marginBottom: '20px', overflowX: 'auto' }}> {/* Προστέθηκε πάλι overflowX:auto αν η οθόνη είναι πολύ μικρή για όλους τους μήνες */}
+          <table style={{ minWidth: '900px', width: '100%', borderCollapse: 'collapse' }}> {/* Ορίστηκε ένα minWidth για να μη συμπιέζεται υπερβολικά */}
             <thead>
               <tr>
+                {/* Η στήλη "Έτος" αφαιρείται από εδώ, καθώς το έτος επιλέγεται από το dropdown */}
                 {months.map(month => (
                   <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
                 ))}
@@ -1358,50 +1383,43 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {/* Μόνο μία σειρά για το επιλεγμένο έτος */}
+              {/* Εμφανίζουμε μόνο τη σειρά για το επιλεγμένο έτος */}
               <tr>
                 {months.map((month, monthIndex) => {
+                  // Παίρνουμε τα δεδομένα για το επιλεγμένο έτος και τον τρέχοντα μήνα
                   const values = history[selectedYear]?.[month] || { weight: '', bmi: '' };
 
-                  // Find previous month's data for comparison
+                  // Logic to find previous month's data for comparison within the selected year
                   let prevWeight = null;
                   let prevBMI = null;
 
                   if (monthIndex > 0) {
-                    // Previous month in the same year
                     const prevMonth = months[monthIndex - 1];
                     prevWeight = history[selectedYear]?.[prevMonth]?.weight;
                     prevBMI = history[selectedYear]?.[prevMonth]?.bmi;
-                  } else {
-                    // If it's January, compare with December of the previous selected year
+                  } else if (selectedYear > Object.keys(history).sort()[0]) { // If it's January and not the first year
+                    // Compare with December of the previous year
                     const prevYear = parseInt(selectedYear) - 1;
-                    if (history[prevYear]) {
-                      prevWeight = history[prevYear]['Δεκέμβριος']?.weight;
-                      prevBMI = history[prevYear]['Δεκέμβριος']?.bmi;
-                    }
+                    prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
+                    prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
                   }
 
-                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
-                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
+
+                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight), true);
+                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI), false);
 
                   return (
                     <React.Fragment key={`${selectedYear}-${month}-data`}>
-                      <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc' }}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
                         <input
                           type="number"
                           step="0.1"
                           value={values.weight || ''}
                           onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
-                          style={{
-                            width: '60px',
-                            border: '1px solid #ddd',
-                            padding: '6px',
-                            borderRadius: '4px',
-                            color: weightColor
-                          }}
+                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px', color: weightColor }}
                         />
                       </td>
-                      <td style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
+                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
                         {values.bmi || ''}
                       </td>
                     </React.Fragment>
