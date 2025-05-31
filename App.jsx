@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; // Προσθέστε useRef
+import React, { useState, useEffect, useRef } from 'react';
 
 const months = [
   'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος',
@@ -204,8 +204,9 @@ const initialPlan = {
   ]
 };
 
+// **ΤΡΟΠΟΠΟΙΗΜΕΝΗ ΣΥΝΑΡΤΗΣΗ kcal:** Τώρα στρογγυλοποιεί στην κοντινότερη ακέραιη τιμή
 function kcal(p, f, c) {
-  return p * 4 + f * 9 + c * 4;
+  return Math.round(p * 4 + f * 9 + c * 4);
 }
 
 function calculateBMI(weight, height) {
@@ -247,6 +248,7 @@ function calculateMealMacros(ingredients) {
   });
 
   return {
+    // **Στρογγυλοποίηση εδώ για ακρίβεια 1 δεκαδικού**
     protein: parseFloat(protein.toFixed(1)),
     fat: parseFloat(fat.toFixed(1)),
     carbs: parseFloat(carbs.toFixed(1))
@@ -294,7 +296,7 @@ function calculateDailyCalories(weight, heightCm, age, gender, activityLevel, go
       break;
   }
 
-  return Math.round(finalCalories);
+  return Math.round(finalCalories); // **Στρογγυλοποίηση στην κοντινότερη ακέραιη**
 }
 
 // ΣΥΝΑΡΤΗΣΕΙΣ ΓΙΑ ΥΠΟΛΟΓΙΣΜΟ ΗΜΕΡΗΣΙΩΝ ΜΑΚΡΟΣΤΟΙΧΕΙΩΝ
@@ -307,7 +309,7 @@ function calculateDailyProtein(dailyCalories, goal) {
   } else {
     proteinPercentage = 0.20; // Κανονική για διατήρηση
   }
-  return Math.round((dailyCalories * proteinPercentage) / 4); // 4 kcal ανά γραμμάριο πρωτεΐνης
+  return Math.round((dailyCalories * proteinPercentage) / 4); // **Στρογγυλοποίηση στην κοντινότερη ακέραιη**
 }
 
 function calculateDailyFat(dailyCalories, goal) {
@@ -319,7 +321,7 @@ function calculateDailyFat(dailyCalories, goal) {
   } else {
     fatPercentage = 0.25; // Κανονικό για διατήρηση
   }
-  return Math.round((dailyCalories * fatPercentage) / 9); // 9 kcal ανά γραμμάριο λίπους
+  return Math.round((dailyCalories * fatPercentage) / 9); // **Στρογγυλοποίηση στην κοντινότερη ακέραιη**
 }
 
 function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
@@ -329,7 +331,7 @@ function calculateDailyCarbs(dailyCalories, dailyProtein, dailyFat) {
   const caloriesFromCarbs = dailyCalories - caloriesFromProtein - caloriesFromFat;
   // Προσοχή: Εάν οι θερμίδες υδατανθράκων βγούν αρνητικές (π.χ. λόγω πολύ υψηλής πρωτεΐνης/λίπους σε cut),
   // τις θέτουμε στο 0.
-  return Math.round(Math.max(0, caloriesFromCarbs / 4)); // 4 kcal ανά γραμμάριο υδατανθράκων
+  return Math.round(Math.max(0, caloriesFromCarbs / 4)); // **Στρογγυλοποίηση στην κοντινότερη ακέραιη**
 }
 
 // ΝΕΑ ΣΥΝΑΡΤΗΣΗ: Υπολογίζει το χρώμα με βάση τη σύγκριση προηγούμενης/τρέχουσας τιμής
@@ -793,10 +795,11 @@ export default function App() {
           }
         });
 
+        // **Στρογγυλοποίηση των συνολικών για την ημέρα**
         const totalKcal = kcal(totalP, totalF, totalC);
         const netKcal = totalKcal - burn;
-        const weight = weights[day]; // Αυτό θα είναι το βάρος της Κυριακής
-        const bmi = calculateBMI(weights.Sunday, height); // Το BMI πάντα υπολογίζεται με το βάρος της Κυριακής
+        const weight = weights[day]; 
+        const bmi = calculateBMI(weights.Sunday, height); 
 
 
         return (
@@ -812,7 +815,7 @@ export default function App() {
                   <th>Λίπος (g)</th>
                   <th>Υδατ. (g)</th>
                   <th>Θερμίδες (kcal)</th>
-                  <th>Ενέργειες</th> {/* Νέα στήλη για κουμπιά */}
+                  <th>Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
@@ -820,13 +823,12 @@ export default function App() {
                   entry.type === 'meal' ? (
                     <>
                       <tr key={`${day}-${mealIdx}-title`} style={{ background: '#f9f9f9', fontWeight: 'bold' }}>
-                        <td rowSpan={entry.ingredients.length + 2}>{entry.meal}</td> {/* Meal name +2 για Add button */}
-                        <td colSpan="7"></td> {/* Empty cells for spacing */}
+                        <td rowSpan={entry.ingredients.length + 2}>{entry.meal}</td>
+                        <td colSpan="7"></td>
                       </tr>
                       {entry.ingredients.map((ingredient, ingredientIdx) => {
                         const foodInfo = foodDatabase[ingredient.foodId];
-                        // Αν δεν βρεθεί η τροφή, δείχνουμε 0 και προειδοποίηση
-                        if (!foodInfo && ingredient.foodId !== '') { // Added check for empty foodId
+                        if (!foodInfo && ingredient.foodId !== '') {
                           console.warn(`Food ID "${ingredient.foodId}" not found in foodDatabase.`);
                         }
 
@@ -837,9 +839,8 @@ export default function App() {
                         const p = parseFloat(((foodInfo?.protein || 0) * multiplier).toFixed(1));
                         const f = parseFloat(((foodInfo?.fat || 0) * multiplier).toFixed(1));
                         const c = parseFloat(((foodInfo?.carbs || 0) * multiplier).toFixed(1));
-                        const itemKcal = kcal(p, f, c);
+                        const itemKcal = kcal(p, f, c); // Χρησιμοποιεί την τροποποιημένη kcal
 
-                        // Δημιουργία αναφοράς για κάθε Autocomplete
                         if (!autocompleteRefs.current[day]) autocompleteRefs.current[day] = {};
                         if (!autocompleteRefs.current[day][mealIdx]) autocompleteRefs.current[day][mealIdx] = {};
                         if (!autocompleteRefs.current[day][mealIdx][ingredientIdx]) {
@@ -848,25 +849,23 @@ export default function App() {
 
                         return (
                           <tr key={`${day}-${mealIdx}-${ingredientIdx}`}>
-                            <td style={{ position: 'relative' }}> {/* Γονικό div για το autocomplete */}
-                                {/* **ΝΕΑ ΑΛΛΑΓΗ:** Input για autocomplete */}
+                            <td style={{ position: 'relative' }}>
                                 <input
                                     type="text"
                                     value={autocompleteInput[day]?.[mealIdx]?.[ingredientIdx] || ''}
                                     onChange={e => handleAutocompleteInputChange(day, mealIdx, ingredientIdx, e.target.value)}
-                                    onFocus={e => handleAutocompleteInputChange(day, mealIdx, ingredientIdx, e.target.value)} // Ξανα-φιλτράρει όταν αποκτά focus
+                                    onFocus={e => handleAutocompleteInputChange(day, mealIdx, ingredientIdx, e.target.value)}
                                     placeholder="Αναζήτηση τροφής..."
                                     style={{ width: '150px' }}
                                 />
-                                {/* Λίστα προτάσεων */}
                                 {filteredFoodOptions[day]?.[mealIdx]?.[ingredientIdx]?.length > 0 && (
                                     <ul
-                                        ref={autocompleteRefs.current[day][mealIdx][ingredientIdx]} // Αναφορά για το κλικ έξω
+                                        ref={autocompleteRefs.current[day][mealIdx][ingredientIdx]}
                                         style={{
                                             position: 'absolute',
-                                            top: '100%', // Κάτω από το input
+                                            top: '100%',
                                             left: 0,
-                                            zIndex: 100, // Να εμφανίζεται πάνω από άλλα στοιχεία
+                                            zIndex: 100,
                                             listStyle: 'none',
                                             margin: 0,
                                             padding: 0,
@@ -874,7 +873,8 @@ export default function App() {
                                             backgroundColor: 'white',
                                             maxHeight: '200px',
                                             overflowY: 'auto',
-                                            width: '100%' // Ίδιο πλάτος με το input
+                                            width: '100%',
+                                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)' // Προσθήκη σκιάς
                                         }}
                                     >
                                         {filteredFoodOptions[day][mealIdx][ingredientIdx].map(food => (
@@ -898,11 +898,11 @@ export default function App() {
                             <td>
                               <input
                                 type="number"
-                                step="0.1" // Επιδέχεται δεκαδικές ποσότητες
+                                step="0.1"
                                 value={ingredient.quantity || ''}
                                 onChange={e => handleMealIngredientChange(day, mealIdx, ingredientIdx, 'quantity', e.target.value)}
                                 style={{ width: '80px' }}
-                              /> {foodInfo?.unit || ''} {/* Εμφανίζει τη μονάδα (με ασφαλή πρόσβαση) */}
+                              /> {foodInfo?.unit || ''}
                             </td>
                             <td>{p}</td>
                             <td>{f}</td>
@@ -922,9 +922,9 @@ export default function App() {
                         <td>{calculateMealMacros(entry.ingredients).protein}</td>
                         <td>{calculateMealMacros(entry.ingredients).fat}</td>
                         <td>{calculateMealMacros(entry.ingredients).carbs}</td>
+                        {/* **Στρογγυλοποίηση εδώ** */}
                         <td>{kcal(calculateMealMacros(entry.ingredients).protein, calculateMealMacros(entry.ingredients).fat, calculateMealMacros(entry.ingredients).carbs)}</td>
                         <td>
-                          {/* **ΝΕΑ ΠΡΟΣΘΗΚΗ:** Κουμπί Προσθήκης Συστατικού */}
                           <button onClick={() => addIngredient(day, mealIdx)} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
                             Προσθήκη Συστατικού
                           </button>
@@ -939,44 +939,44 @@ export default function App() {
                         <input
                           type="number"
                           value={entry.burn || ''}
-                          onChange={e => handleMealIngredientChange(day, mealIdx, null, 'burn', e.target.value)} // null για ingredientIdx
+                          onChange={e => handleMealIngredientChange(day, mealIdx, null, 'burn', e.target.value)}
                           style={{ width: '80px' }}
                         />
                       </td>
-                      <td colSpan="2"></td> {/* Κενές στήλες για τη δραστηριότητα */}
+                      <td colSpan="2"></td>
                     </tr>
                   )
                 ))}
                 {/* Συνολικά για την ημέρα */}
-                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                <tr style={{ background: '#b3d9ff', fontWeight: 'bold', fontSize: '1.1em' }}> {/* Ελαφρώς πιο έντονο background και μεγαλύτερο font */}
                   <td colSpan="5">Σύνολο Ημέρας (Θερμίδες)</td>
                   <td>{totalKcal}</td>
                   <td colSpan="2"></td>
                 </tr>
                 {/* ΝΕΕΣ ΓΡΑΜΜΕΣ ΓΙΑ ΣΥΝΟΛΙΚΑ ΜΑΚΡΟΣΤΟΙΧΕΙΑ ΗΜΕΡΑΣ */}
-                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                <tr style={{ background: '#b3d9ff', fontWeight: 'bold', fontSize: '1.1em' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Πρωτεΐνη)</td>
-                  <td>{totalP.toFixed(1)} g</td>
+                  <td>{Math.round(totalP)} g</td> {/* Στρογγυλοποίηση σε ακέραιη */}
                   <td colSpan="2"></td>
                 </tr>
-                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                <tr style={{ background: '#b3d9ff', fontWeight: 'bold', fontSize: '1.1em' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Λιπαρά)</td>
-                  <td>{totalF.toFixed(1)} g</td>
+                  <td>{Math.round(totalF)} g</td> {/* Στρογγυλοποίηση σε ακέραιη */}
                   <td colSpan="2"></td>
                 </tr>
-                <tr style={{ background: '#cceeff', fontWeight: 'bold' }}>
+                <tr style={{ background: '#b3d9ff', fontWeight: 'bold', fontSize: '1.1em' }}>
                   <td colSpan="5">Σύνολο Ημέρας (Υδατάνθρακες)</td>
-                  <td>{totalC.toFixed(1)} g</td>
+                  <td>{Math.round(totalC)} g</td> {/* Στρογγυλοποίηση σε ακέραιη */}
                   <td colSpan="2"></td>
                 </tr>
                 {burn > 0 && (
                   <>
-                    <tr style={{ color: 'green' }}>
+                    <tr style={{ color: 'green', background: '#e6ffe6' }}> {/* Ελαφρώς πιο έντονο background */}
                       <td colSpan="5">Κατανάλωση θερμίδων</td>
                       <td>-{burn}</td>
                       <td colSpan="2"></td>
                     </tr>
-                    <tr style={{ background: '#e0ffe0', fontWeight: 'bold' }}>
+                    <tr style={{ background: '#ccffcc', fontWeight: 'bold', fontSize: '1.1em' }}> {/* Ελαφρώς πιο έντονο background */}
                       <td colSpan="5">Καθαρό θερμιδικό ισοζύγιο</td>
                       <td>{netKcal}</td>
                       <td colSpan="2"></td>
@@ -985,13 +985,13 @@ export default function App() {
                 )}
               </tbody>
             </table>
-            {day === 'Sunday' && ( // Εμφάνιση του πεδίου βάρους μόνο για την Κυριακή
+            {day === 'Sunday' && (
               <div style={{ marginTop: '10px' }}>
                 <label>Βάρος σώματος (kg): </label>
                 <input
                   type="number"
                   step="0.1"
-                  value={weights.Sunday || ''} // Χρησιμοποιεί το state weights.Sunday
+                  value={weights.Sunday || ''}
                   onChange={e => handleSundayWeightChange(e.target.value)}
                 />
                 {bmi && (
@@ -1004,8 +1004,8 @@ export default function App() {
       })}
 
       <h2 style={{ marginTop: '40px' }}>📅 Ιστορικό Βάρους & BMI</h2>
-      <div style={{ overflowX: 'auto', marginBottom: '20px' }}> {/* Added overflow for horizontal scrolling */}
-        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}> {/* minWidth to ensure horizontal layout */}
+      <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
+        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               <th rowSpan="2" style={{ background: '#ddd', padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>Έτος</th>
@@ -1023,56 +1023,59 @@ export default function App() {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(history).sort().map((year, yearIndex, sortedYears) => ( // Add yearIndex and sortedYears
-              <tr key={year}>
-                <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
-                {months.map((month, monthIndex) => { // Add monthIndex
-                  const values = history[year]?.[month] || { weight: '', bmi: '' };
+            {Object.keys(history).sort().map((year, yearIndex, sortedYears) => {
+              const currentYearData = history[year] || {}; // Ensure currentYearData exists
+              return (
+                <tr key={year}>
+                  <td style={{ background: '#eee', fontWeight: 'bold', padding: '8px', border: '1px solid #ccc' }}>{year}</td>
+                  {months.map((month, monthIndex) => {
+                    const values = currentYearData[month] || { weight: '', bmi: '' };
 
-                  // Find previous month's data for comparison
-                  let prevWeight = null;
-                  let prevBMI = null;
+                    // Find previous month's data for comparison
+                    let prevWeight = null;
+                    let prevBMI = null;
 
-                  if (monthIndex > 0) {
-                    // Previous month in the same year
-                    const prevMonth = months[monthIndex - 1];
-                    prevWeight = history[year]?.[prevMonth]?.weight;
-                    prevBMI = history[year]?.[prevMonth]?.bmi;
-                  } else if (yearIndex > 0) {
-                    // Previous month is December of the previous year
-                    const prevYear = sortedYears[yearIndex - 1];
-                    prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
-                    prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
-                  }
+                    if (monthIndex > 0) {
+                      // Previous month in the same year
+                      const prevMonth = months[monthIndex - 1];
+                      prevWeight = currentYearData[prevMonth]?.weight;
+                      prevBMI = currentYearData[prevMonth]?.bmi;
+                    } else if (yearIndex > 0) {
+                      // Previous month is December of the previous year
+                      const prevYear = sortedYears[yearIndex - 1];
+                      prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
+                      prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
+                    }
 
-                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
-                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
-                  
-                  return (
-                    <React.Fragment key={`${year}-${month}-data`}>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={values.weight || ''}
-                          onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
-                          style={{ 
-                            width: '60px', 
-                            border: '1px solid #ddd', 
-                            padding: '4px', 
-                            borderRadius: '4px',
-                            color: weightColor // Apply color here
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}> {/* Apply color here */}
-                        {values.bmi || ''}
-                      </td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
-            ))}
+                    const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight));
+                    const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI));
+                    
+                    return (
+                      <React.Fragment key={`${year}-${month}-data`}>
+                        <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={values.weight || ''}
+                            onChange={e => handleHistoryChange(year, month, e.target.value, 'weight')}
+                            style={{ 
+                              width: '60px', 
+                              border: '1px solid #ddd', 
+                              padding: '4px', 
+                              borderRadius: '4px',
+                              color: weightColor
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
+                          {values.bmi || ''}
+                        </td>
+                      </React.Fragment>
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
