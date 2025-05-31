@@ -988,10 +988,11 @@ export default function App() {
       <h1 style={{ textAlign: 'center', color: '#333' }}>📊 Εβδομαδιαίο Πλάνο Διατροφής & Βάρους</h1>
 
       <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Πληροφορίες Χρήστη & Στόχος</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Πληροφορίες Χρήστη & Στόχος</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '10px' }}>
+          <div style={{ display: 'inline-flex', gap: '20px', paddingRight: '20px' }}> {/* Use inline-flex and add paddingRight for scroll */}
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minWidth: '280px' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>📏 Ύψος (σε μέτρα): </label>
                 <input
                     type="number"
@@ -1001,7 +1002,7 @@ export default function App() {
                     style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                 />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minWidth: '280px' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>🎂 Ηλικία: </label>
                 <input
                     type="number"
@@ -1010,7 +1011,7 @@ export default function App() {
                     style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                 />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minWidth: '280px' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>🚻 Φύλο: </label>
                 <select
                     value={gender}
@@ -1021,7 +1022,7 @@ export default function App() {
                     <option value="female">Γυναίκα</option>
                 </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minWidth: '280px' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>🏃 Επίπεδο Δραστηριότητας: </label>
                 <select
                     value={activityLevel}
@@ -1035,7 +1036,7 @@ export default function App() {
                     <option value="veryActive">Πολύ Ενεργή (Σκληρή άσκηση/Φυσική εργασία)</option>
                 </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minWidth: '280px' }}>
                 <label style={{ marginBottom: '5px', fontWeight: 'bold', color: '#666' }}>🎯 Στόχος: </label>
                 <select
                     value={goal}
@@ -1047,6 +1048,7 @@ export default function App() {
                     <option value="cut">Γράμμωση</option>
                 </select>
             </div>
+          </div>
         </div>
 
         {dailyCalorieTarget && (
@@ -1364,122 +1366,103 @@ export default function App() {
           </select>
         </div>
 
-        {/* Ο πίνακας τώρα θα εμφανίζει μόνο τους μήνες του επιλεγμένου έτους */}
-        <div style={{ marginBottom: '20px', overflowX: 'auto' }}> {/* Προστέθηκε πάλι overflowX:auto αν η οθόνη είναι πολύ μικρή για όλους τους μήνες */}
-          <table style={{ minWidth: '900px', width: '100%', borderCollapse: 'collapse' }}> {/* Ορίστηκε ένα minWidth για να μη συμπιέζεται υπερβολικά */}
-            <thead>
-              <tr>
-                {/* Η στήλη "Έτος" αφαιρείται από εδώ, καθώς το έτος επιλέγεται από το dropdown */}
-                {months.map(month => (
-                  <th key={month} colSpan="2" style={{ background: '#cceeff', padding: '10px', textAlign: 'center', border: '1px solid #ccc' }}>{month}</th>
-                ))}
-              </tr>
-              <tr>
-                {months.map(month => (
-                  <React.Fragment key={`${month}-sub`}>
-                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>Βάρος (kg)</th>
-                    <th style={{ background: '#f0f8ff', padding: '8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '0.9em' }}>BMI</th>
-                  </React.Fragment>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {/* Εμφανίζουμε μόνο τη σειρά για το επιλεγμένο έτος */}
-              <tr>
-                {months.map((month, monthIndex) => {
-                  // Παίρνουμε τα δεδομένα για το επιλεγμένο έτος και τον τρέχοντα μήνα
-                  const values = history[selectedYear]?.[month] || { weight: '', bmi: '' };
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+          <thead>
+            <tr style={{ background: '#eee' }}>
+              <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Μήνας</th>
+              <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>Βάρος (kg)</th>
+              <th style={{ padding: '10px', border: '1px solid #ccc', textAlign: 'left' }}>BMI</th>
+            </tr>
+          </thead>
+          <tbody>
+            {months.map(month => {
+              const currentMonthData = history[selectedYear]?.[month] || { weight: '', bmi: '' };
+              const previousMonthData = months.indexOf(month) > 0 ?
+                history[selectedYear]?.[months[months.indexOf(month) - 1]] : null;
 
-                  // Logic to find previous month's data for comparison within the selected year
-                  let prevWeight = null;
-                  let prevBMI = null;
+              const currentWeight = parseFloat(currentMonthData.weight);
+              const previousWeight = previousMonthData ? parseFloat(previousMonthData.weight) : null;
+              const weightColor = getComparisonColor(currentWeight, previousWeight, true);
 
-                  if (monthIndex > 0) {
-                    const prevMonth = months[monthIndex - 1];
-                    prevWeight = history[selectedYear]?.[prevMonth]?.weight;
-                    prevBMI = history[selectedYear]?.[prevMonth]?.bmi;
-                  } else if (selectedYear > Object.keys(history).sort()[0]) { // If it's January and not the first year
-                    // Compare with December of the previous year
-                    const prevYear = parseInt(selectedYear) - 1;
-                    prevWeight = history[prevYear]?.['Δεκέμβριος']?.weight;
-                    prevBMI = history[prevYear]?.['Δεκέμβριος']?.bmi;
-                  }
+              const currentBmi = parseFloat(currentMonthData.bmi);
+              const previousBmi = previousMonthData ? parseFloat(previousMonthData.bmi) : null;
+              const bmiColor = getComparisonColor(currentBmi, previousBmi, false);
 
+              return (
+                <tr key={month}>
+                  <td style={{ padding: '10px', border: '1px solid #eee' }}>{month}</td>
+                  <td style={{ padding: '10px', border: '1px solid #eee' }}>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={currentMonthData.weight}
+                      onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
+                      style={{ width: '80px', padding: '6px', borderRadius: '4px', border: `1px solid ${weightColor}` }}
+                    />
+                    {previousWeight !== null && !isNaN(currentWeight) && !isNaN(previousWeight) && currentWeight !== previousWeight && (
+                        <span style={{ marginLeft: '5px', color: weightColor }}>
+                            {currentWeight > previousWeight ? '▲' : '▼'}
+                        </span>
+                    )}
+                  </td>
+                  <td style={{ padding: '10px', border: '1px solid #eee', color: bmiColor }}>
+                    {currentMonthData.bmi !== '' && !isNaN(currentMonthData.bmi) ? parseFloat(currentMonthData.bmi).toFixed(1) : ''}
+                    {previousBmi !== null && !isNaN(currentBmi) && !isNaN(previousBmi) && currentBmi !== previousBmi && (
+                        <span style={{ marginLeft: '5px' }}>
+                            {currentBmi > previousBmi ? '▲' : '▼'}
+                        </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
 
-                  const weightColor = getComparisonColor(parseFloat(values.weight), parseFloat(prevWeight), true);
-                  const bmiColor = getComparisonColor(parseFloat(values.bmi), parseFloat(prevBMI), false);
-
-                  return (
-                    <React.Fragment key={`${selectedYear}-${month}-data`}>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc' }}>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={values.weight || ''}
-                          onChange={e => handleHistoryChange(selectedYear, month, e.target.value, 'weight')}
-                          style={{ width: '60px', border: '1px solid #ddd', padding: '4px', borderRadius: '4px', color: weightColor }}
-                        />
-                      </td>
-                      <td style={{ padding: '6px', textAlign: 'center', border: '1px solid #ccc', fontWeight: 'bold', color: bmiColor }}>
-                        {values.bmi || ''}
-                      </td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
+        <div style={{ height: '300px', width: '100%' }}>
+          <Line data={chartData} options={chartOptions} />
         </div>
       </div>
 
-      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', height: '400px' }}>
-        <h3 style={{ marginBottom: '15px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Γράφημα Ιστορικού</h3>
-        <Line data={chartData} options={chartOptions} />
-      </div>
-
-      <div style={{ marginBottom: '30px', padding: '20px', borderRadius: '8px', background: '#e0f7fa', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginBottom: '20px', color: '#00796b', borderBottom: '1px solid #b2ebf2', paddingBottom: '10px' }}>Σύνοψη Εβδομάδας</h2>
-        <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '15px', textAlign: 'center' }}>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #80deea' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Θερμίδες Κατανάλωσης:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#0097a7' }}>{Math.round(weeklySummary.calories)} kcal</p>
+      <div style={{ marginTop: '40px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Σύνοψη Εβδομάδας</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#e3f2fd', borderRadius: '5px', border: '1px solid #90caf9', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#2196f3' }}>Συνολικές Θερμίδες:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#1976d2' }}>{Math.round(weeklySummary.calories)} kcal</p>
           </div>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #c8e6c9' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολική Πρωτεΐνη:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#4caf50' }}>{Math.round(weeklySummary.protein)} g</p>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#e8f5e9', borderRadius: '5px', border: '1px solid #a5d6a7', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#4caf50' }}>Συνολική Πρωτεΐνη:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#388e3c' }}>{Math.round(weeklySummary.protein)} g</p>
           </div>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffecb3' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικό Λίπος:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#ffc107' }}>{Math.round(weeklySummary.fat)} g</p>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#fff3e0', borderRadius: '5px', border: '1px solid #ffcc80', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#ff9800' }}>Συνολικό Λίπος:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#f57c00' }}>{Math.round(weeklySummary.fat)} g</p>
           </div>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #ffcdd2' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικοί Υδατάνθρακες:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#f44336' }}>{Math.round(weeklySummary.carbs)} g</p>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#ffebee', borderRadius: '5px', border: '1px solid #ef9a9a', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#f44336' }}>Συνολικοί Υδατάνθρακες:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#d32f2f' }}>{Math.round(weeklySummary.carbs)} g</p>
           </div>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#fff', borderRadius: '5px', border: '1px solid #b3e5fc' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Συνολικές Καύσεις:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#03a9f4' }}>{Math.round(weeklySummary.burnedCalories)} kcal</p>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#fce4ec', borderRadius: '5px', border: '1px solid #f8bbd0', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#e91e63' }}>Θερμίδες Καύσης:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#c2185b' }}>{Math.round(weeklySummary.burnedCalories)} kcal</p>
           </div>
-          <div style={{ flex: '1 1 180px', padding: '10px', background: '#e1f5fe', borderRadius: '5px', border: '1px solid #29b6f6' }}>
-            <p style={{ margin: '0', fontSize: '0.9em', color: '#555' }}>Καθαρό Εβδομαδιαίο Ισοζύγιο:</p>
-            <p style={{ margin: '5px 0 0 0', fontSize: '1.5em', fontWeight: 'bold', color: '#0288d1' }}>{Math.round(weeklySummary.calories - weeklySummary.burnedCalories)} kcal</p>
+          <div style={{ flex: '1 1 200px', padding: '15px', background: '#e0f2f7', borderRadius: '5px', border: '1px solid #80deea', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#00bcd4' }}>Καθαρό Ισοζύγιο:</h3>
+            <p style={{ margin: '0', fontSize: '1.8em', fontWeight: 'bold', color: '#00838f' }}>{Math.round(weeklySummary.calories - weeklySummary.burnedCalories)} kcal</p>
           </div>
         </div>
       </div>
 
-      <div style={{ marginTop: '40px', textAlign: 'center', padding: '20px', background: '#f0f0f0', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginBottom: '20px', color: '#555' }}>Διαχείριση Δεδομένων</h2>
+      <div style={{ marginTop: '40px', padding: '20px', borderRadius: '8px', background: '#f9f9f9', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-around', gap: '20px', flexWrap: 'wrap' }}>
         <button
           onClick={exportData}
-          style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em', marginRight: '15px' }}
+          style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em' }}
         >
-          Εξαγωγή Δεδομένων (JSON)
+          Εξαγωγή Δεδομένων
         </button>
-        <label
-          htmlFor="import-file"
-          style={{ background: '#2196F3', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em', display: 'inline-block' }}
-        >
-          Εισαγωγή Δεδομένων (JSON)
+        <label htmlFor="import-file" style={{ background: '#2196F3', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontSize: '1em', display: 'inline-block' }}>
+          Εισαγωγή Δεδομένων
           <input
             type="file"
             id="import-file"
@@ -1488,9 +1471,6 @@ export default function App() {
             style={{ display: 'none' }}
           />
         </label>
-        <p style={{ marginTop: '15px', fontSize: '0.9em', color: '#777' }}>
-          Χρησιμοποιήστε την εισαγωγή/εξαγωγή για backup ή μεταφορά των δεδομένων σας.
-        </p>
       </div>
 
     </div>
